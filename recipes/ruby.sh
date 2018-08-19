@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -o pipefail
 
 curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -17,23 +18,25 @@ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
 echo 'eval "$(rbenv init -)"' >> ~/.bashrc
 exec $SHELL
 
+echo "############## SETTING UP RUBY BUILD ####################"
 git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
 exec $SHELL
 
-rbenv install -l | awk -F '.' '
+
+RUBY_VERSION=$(rbenv install -l | awk -F '.' '
    /^[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+[[:space:]]*$/ {
       if ( ($1 * 100 + $2) * 100 + $3 > Max ) { 
          Max = ($1 * 100 + $2) * 100 + $3
          LATEST_RUBY_VERSION=$0
          }
       }
-END { print LATEST_RUBY_VERSION }'
+END {print LATEST_RUBY_VERSION}')
 
-echo "########### INSTALLING LATEST RUBY VERSION $(LATEST_RUBY_VERSION) ###########"
+echo "########### INSTALLING LATEST RUBY VERSION ${RUBY_VERSION} ###########"
 
-rbenv install $LATEST_RUBY_VERSION
-rbenv global $LATEST_RUBY_VERSION
+rbenv install $RUBY_VERSION
+rbenv global $RUBY_VERSION
 
 echo "Installed ruby version:" 
 ruby -v
