@@ -249,6 +249,7 @@ install_tldr
 install_fzf
 install_zoxide
 
+print_message "Make sure NERD FONT is selected is download correctly and selected in wezterm.lua"
 # Prompt for manual Powerlevel10k configuration
 if command -v zsh &> /dev/null && [ -d "$HOME/powerlevel10k" ]; then
   print_message "Launching Powerlevel10k configuration wizard..."
