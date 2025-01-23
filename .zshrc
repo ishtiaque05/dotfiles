@@ -77,13 +77,13 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 # =========================
 
 # Zsh Syntax Highlighting
-source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Zsh Autosuggestions
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # =========================
-# Aliases and Tools
+# Aliases and Tools: https://www.josean.com/posts/7-amazing-cli-tools
 # =========================
 
 # Eza (better ls)
