@@ -10,8 +10,14 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 
+# Initialize Zsh prompt
+
+autoload -Uz promptinit
+promptinit
+prompt adam1
+
 # =========================
-# Prompt and Theme Settings
+# Prompt and Theme Settings (override above prompt to stop flickering)
 # =========================
 
 # powerlevel10k Theme
@@ -22,12 +28,6 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 
 # Load Powerlevel10k overrides (custom settings)
 [[ -f ~/.p10k-overrides.zsh ]] && source ~/.p10k-overrides.zsh
-
-# Initialize Zsh prompt
-
-autoload -Uz promptinit
-promptinit
-prompt adam1
 
 # =========================
 # Command Line History
