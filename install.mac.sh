@@ -85,8 +85,8 @@ install_zsh() {
     fi
   fi
 
-  print_message "Copying new .zshrc from current directory to home directory..."
-  cp ./.zshrc "$HOME/.zshrc"
+  print_message "Copying new .zshrc.mac from current directory to home directory..."
+  cp ./.zshrc.mac "$HOME/.zshrc"
 }
 
 setup_nerd_font() {
