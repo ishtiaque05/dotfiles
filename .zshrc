@@ -90,10 +90,6 @@ source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 alias ls="eza --icons=always"
 
-# Zoxide (better cd)
-eval "$(zoxide init zsh)"
-alias cd="z"
-
 # =========================
 # Fuzzy Finder (FZF)
 # =========================
@@ -137,6 +133,10 @@ _fzf_comprun() {
 # =========================
 
 export BAT_THEME=tokyonight_night
+
+# Zoxide (better cd)
+eval "$(zoxide init zsh)"
+alias cd="z"
 
 # =========================
 # Miscellaneous Settings

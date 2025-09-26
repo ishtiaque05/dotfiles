@@ -5,12 +5,44 @@ print_message() {
   echo -e "\n[INFO]: $1"
 }
 
+# Function to detect OS
+detect_os() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macos"
+  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS="linux"
+  else
+    print_message "Unsupported OS: $OSTYPE"
+    exit 1
+  fi
+  print_message "Detected OS: $OS"
+}
+
+# Function to install Homebrew on macOS
+install_homebrew() {
+  if ! command -v brew &> /dev/null; then
+    print_message "Homebrew not found. Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Add Homebrew to PATH for Apple Silicon Macs
+    if [[ $(uname -m) == "arm64" ]]; then
+      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+      echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+    print_message "Homebrew has been installed."
+  else
+    print_message "Homebrew is already installed."
+  fi
+}
+
 install_git_and_curl() {
   # Check if Git is installed
   if ! command -v git &> /dev/null; then
     print_message "Git is not installed. Installing Git..."
-    sudo apt update -y
-    sudo apt install git -y
+    brew install git
     print_message "Git has been installed."
   else
     print_message "Git is already installed."
@@ -19,8 +51,7 @@ install_git_and_curl() {
   # Check if curl is installed
   if ! command -v curl &> /dev/null; then
     print_message "curl is not installed. Installing curl..."
-    sudo apt update -y
-    sudo apt install curl -y
+    brew install curl
     print_message "curl has been installed."
   else
     print_message "curl is already installed."
@@ -32,11 +63,8 @@ install_zsh() {
   if [[ "$SHELL" != *"zsh"* ]]; then
     print_message "Default shell is not Zsh. Installing Zsh..."
 
-    # Update package list
-    sudo apt update -y
-
     # Install Zsh
-    sudo apt install zsh -y
+    brew install zsh
 
     # Change the default shell to Zsh
     print_message "Changing default shell to Zsh..."
@@ -64,29 +92,21 @@ install_zsh() {
 setup_nerd_font() {
   # Install MesloLGS Nerd Fonts
   print_message "Installing MesloLGS Nerd Fonts..."
-  FONT_DIR="$HOME/.local/share/fonts"
+  FONT_DIR="$HOME/Library/Fonts"
   mkdir -p "$FONT_DIR"
   curl -fLo "$FONT_DIR/MesloLGS NF Regular.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
   curl -fLo "$FONT_DIR/MesloLGS NF Bold.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf
   curl -fLo "$FONT_DIR/MesloLGS NF Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf
   curl -fLo "$FONT_DIR/MesloLGS NF Bold Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf
 
-  # Refresh font cache
-  fc-cache -fv
   print_message "MesloLGS Nerd Fonts installed successfully."
 }
 
 install_wezterm() {
-    # Install WezTerm
+  # Install WezTerm
   if ! command -v wezterm &> /dev/null; then
     print_message "WezTerm is not installed. Installing WezTerm..."
-    print_message "Adding WezTerm repository and GPG key..."
-    
-    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/wezterm-fury.gpg
-    echo 'deb [signed-by=/etc/apt/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
-
-    sudo apt update -y
-    sudo apt install wezterm -y
+    brew install --cask wezterm
     print_message "WezTerm has been installed."
   else
     print_message "WezTerm is already installed."
@@ -102,9 +122,6 @@ install_wezterm() {
     print_message "WezTerm configuration already exists at $WEZTERM_CONFIG."
   fi
 }
-
-
-print_message "Installation and configuration complete! Please restart your terminal if Zsh is not already active."
 
 install_powerlvl10k() {
   # Install Powerlevel10k theme manually
@@ -123,7 +140,7 @@ install_powerlvl10k() {
 }
 
 install_zsh_autosuggestions() {
-# Install Zsh Autosuggestions plugin manually
+  # Install Zsh Autosuggestions plugin manually
   if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
     print_message "Installing Zsh Autosuggestions plugin manually..."
     git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
@@ -137,7 +154,7 @@ install_zsh_autosuggestions() {
 }
 
 install_zsh_syntax_highlighting() {
-# Install Zsh Syntax Highlighting plugin manually
+  # Install Zsh Syntax Highlighting plugin manually
   if [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ]; then
     print_message "Installing Zsh Syntax Highlighting plugin manually..."
     git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
@@ -153,23 +170,18 @@ install_zsh_syntax_highlighting() {
 install_eza() {
   if ! command -v eza &> /dev/null; then
     print_message "Installing eza (modern replacement for ls)..."
-    sudo mkdir -p /etc/apt/keyrings
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt update
-    sudo apt install -y eza
+    brew install eza
     print_message "eza has been installed."
   else
     print_message "eza is already installed."
   fi
 }
-  
+
 # Function to install zoxide
 install_zoxide() {
   if ! command -v zoxide &> /dev/null; then
     print_message "Installing zoxide (modern replacement for cd)..."
-    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    brew install zoxide
     print_message "zoxide has been installed."
   else
     print_message "zoxide is already installed."
@@ -192,11 +204,12 @@ install_zoxide() {
 
 # Function to install fzf
 install_fzf() {
-  if [ ! -d "$HOME/.fzf" ]; then
+  if ! command -v fzf &> /dev/null; then
     print_message "Installing fzf (fuzzy finder)..."
+    brew install fzf
 
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install --all
+    # Setup shell integration
+    $(brew --prefix)/opt/fzf/install --all
     print_message "fzf has been installed."
   else
     print_message "fzf is already installed."
@@ -207,19 +220,10 @@ install_fzf() {
 install_bat() {
   if ! command -v bat &> /dev/null; then
     print_message "Installing bat (modern replacement for cat)..."
-    sudo apt update -y
-    sudo apt install -y bat
+    brew install bat
+    print_message "bat has been installed."
   else
     print_message "bat is already installed."
-  fi
-
-  # Check if the symlink exists before creating it
-  if [ ! -L "$HOME/.local/bin/bat" ]; then
-    mkdir -p ~/.local/bin
-    ln -sf /usr/bin/batcat ~/.local/bin/bat
-    print_message "Symlink for bat created: ~/.local/bin/bat -> /usr/bin/batcat"
-  else
-    print_message "Symlink for bat already exists."
   fi
 }
 
@@ -227,15 +231,26 @@ install_bat() {
 install_tldr() {
   if ! command -v tldr &> /dev/null; then
     print_message "Installing tldr (simplified man pages)..."
-    sudo apt update -y
-    sudo apt install -y tldr
+    brew install tldr
     print_message "tldr has been installed."
   else
     print_message "tldr is already installed."
   fi
 }
 
+# Detect OS and run appropriate functions
+detect_os
 
+# Only run for macOS
+if [[ "$OS" != "macos" ]]; then
+  print_message "This script is designed for macOS. Exiting..."
+  exit 1
+fi
+
+# Install Homebrew first
+install_homebrew
+
+# Run all installations
 install_git_and_curl
 install_zsh
 setup_nerd_font
@@ -249,7 +264,9 @@ install_tldr
 install_fzf
 install_zoxide
 
+print_message "Installation and configuration complete! Please restart your terminal if Zsh is not already active."
 print_message "Make sure NERD FONT is selected is download correctly and selected in wezterm.lua"
+
 # Prompt for manual Powerlevel10k configuration
 if command -v zsh &> /dev/null && [ -d "$HOME/powerlevel10k" ]; then
   print_message "Launching Powerlevel10k configuration wizard..."
@@ -258,4 +275,4 @@ else
   print_message "Powerlevel10k is not properly installed. Skipping configuration wizard."
 fi
 
-print_message "Don't forget to add tokoyo bat theme. See here: https://www.josean.com/posts/7-amazing-cli-tools"
+print_message "Don't forget to add tokyo-night bat theme. See here: https://www.josean.com/posts/7-amazing-cli-tools"
