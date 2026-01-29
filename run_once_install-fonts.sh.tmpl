@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# =========================
+# Install MesloLGS Nerd Fonts
+# =========================
+# This script installs Nerd Fonts for Powerlevel10k
+# Runs once on first chezmoi apply
+
+set -e
+
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+print_message "Installing MesloLGS Nerd Fonts..."
+
+{{- if eq .chezmoi.os "linux" }}
+# Linux: Install to ~/.local/share/fonts
+FONT_DIR="$HOME/.local/share/fonts"
+mkdir -p "$FONT_DIR"
+
+curl -fLo "$FONT_DIR/MesloLGS NF Regular.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Bold.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Bold Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf
+
+# Refresh font cache
+fc-cache -fv
+print_message "MesloLGS Nerd Fonts installed successfully."
+
+{{- else if eq .chezmoi.os "darwin" }}
+# macOS: Install to ~/Library/Fonts
+FONT_DIR="$HOME/Library/Fonts"
+mkdir -p "$FONT_DIR"
+
+curl -fLo "$FONT_DIR/MesloLGS NF Regular.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Regular.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Bold.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Italic.ttf
+curl -fLo "$FONT_DIR/MesloLGS NF Bold Italic.ttf" https://github.com/romkatv/powerlevel10k-media/raw/master/MesloLGS%20NF%20Bold%20Italic.ttf
+
+print_message "MesloLGS Nerd Fonts installed successfully."
+{{- end }}
+
+print_message "Make sure MesloLGS NF is selected in your terminal settings."
