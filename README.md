@@ -45,11 +45,27 @@ chezmoi apply
 - **Font**: MesloLGS Nerd Font
 - **Multiplexer**: Tmux with vim-style keybindings
 
-### Editor
-- **Neovim**: LazyVim distribution with LSP support
+### Editors
+
+#### Neovim (Terminal-based)
+- **LazyVim**: Modern Neovim distribution with LSP
 - **Languages**: Ruby, Rust, TypeScript, React, Python, Shell
 - **Features**: File explorer, fuzzy finding, git integration, auto-completion
-- **Docs**: See [docs/neovim-keybindings.md](docs/neovim-keybindings.md)
+- **Docs**: [docs/neovim-keybindings.md](docs/neovim-keybindings.md)
+
+#### VSCode (GUI)
+- **Auto-save**: On focus change
+- **Auto-format**: Prettier, ESLint, Rubocop, Black (Python), rustfmt
+- **Languages**: Full LSP support for Ruby, Python, Rust, TypeScript, React, Shell, Docker
+- **Theme**: Tokyo Night with Material Icon Theme
+- **Extensions**: 25+ productivity extensions included
+- **Config**: `~/.config/Code/User/settings.json`
+- **Docs**: [docs/vscode-extensions.md](docs/vscode-extensions.md)
+
+#### EditorConfig
+- **Cross-editor**: Works with VSCode, Neovim, and other editors
+- **Consistent**: Maintains consistent coding styles (indentation, line endings)
+- **Config**: `~/.editorconfig`
 
 ### Zsh Plugins
 - zsh-autosuggestions
@@ -127,6 +143,7 @@ Configuration files use Go templates with OS conditionals:
 
 - [Neovim Keybindings](docs/neovim-keybindings.md) - Complete Neovim/LazyVim shortcuts
 - [Tmux Keybindings](docs/tmux-keybindings.md) - Tmux commands and workflows
+- [VSCode Extensions](docs/vscode-extensions.md) - Recommended extensions and installation guide
 
 ## Manual Steps
 
