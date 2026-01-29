@@ -1,0 +1,146 @@
+{{- if eq .chezmoi.os "linux" }}
+#!/bin/bash
+
+# =========================
+# Linux Package Installation
+# =========================
+# This script installs packages and tools for Linux (Ubuntu/Debian)
+# Runs once on first chezmoi apply
+
+set -e
+
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+# Install Git and curl
+install_git_and_curl() {
+  if ! command -v git &> /dev/null; then
+    print_message "Installing Git..."
+    sudo apt update -y
+    sudo apt install git -y
+  else
+    print_message "Git is already installed."
+  fi
+
+  if ! command -v curl &> /dev/null; then
+    print_message "Installing curl..."
+    sudo apt update -y
+    sudo apt install curl -y
+  else
+    print_message "curl is already installed."
+  fi
+}
+
+# Install and configure Zsh
+install_zsh() {
+  if [[ "$SHELL" != *"zsh"* ]]; then
+    print_message "Installing Zsh..."
+    sudo apt update -y
+    sudo apt install zsh -y
+
+    print_message "Changing default shell to Zsh..."
+    chsh -s $(which zsh)
+    print_message "Zsh installed. You may need to restart your terminal."
+  else
+    print_message "Zsh is already the default shell."
+  fi
+}
+
+# Install WezTerm
+install_wezterm() {
+  if ! command -v wezterm &> /dev/null; then
+    print_message "Installing WezTerm..."
+    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/wezterm-fury.gpg
+    echo 'deb [signed-by=/etc/apt/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+    sudo apt update -y
+    sudo apt install wezterm -y
+    print_message "WezTerm installed."
+  else
+    print_message "WezTerm is already installed."
+  fi
+}
+
+# Install eza (modern ls replacement)
+install_eza() {
+  if ! command -v eza &> /dev/null; then
+    print_message "Installing eza..."
+    sudo mkdir -p /etc/apt/keyrings
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
+    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+    sudo apt update
+    sudo apt install -y eza
+    print_message "eza installed."
+  else
+    print_message "eza is already installed."
+  fi
+}
+
+# Install bat (modern cat replacement)
+install_bat() {
+  if ! command -v bat &> /dev/null; then
+    print_message "Installing bat..."
+    sudo apt update -y
+    sudo apt install -y bat
+
+    # Create symlink (Ubuntu/Debian installs as batcat)
+    if [ ! -L "$HOME/.local/bin/bat" ]; then
+      mkdir -p ~/.local/bin
+      ln -sf /usr/bin/batcat ~/.local/bin/bat
+      print_message "Symlink created: ~/.local/bin/bat -> /usr/bin/batcat"
+    fi
+  else
+    print_message "bat is already installed."
+  fi
+}
+
+# Install fzf (fuzzy finder)
+install_fzf() {
+  if [ ! -d "$HOME/.fzf" ]; then
+    print_message "Installing fzf..."
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    ~/.fzf/install --all
+    print_message "fzf installed."
+  else
+    print_message "fzf is already installed."
+  fi
+}
+
+# Install zoxide (smart cd replacement)
+install_zoxide() {
+  if ! command -v zoxide &> /dev/null; then
+    print_message "Installing zoxide..."
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    print_message "zoxide installed."
+  else
+    print_message "zoxide is already installed."
+  fi
+}
+
+# Install tldr (simplified man pages)
+install_tldr() {
+  if ! command -v tldr &> /dev/null; then
+    print_message "Installing tldr..."
+    sudo apt update -y
+    sudo apt install -y tldr
+    print_message "tldr installed."
+  else
+    print_message "tldr is already installed."
+  fi
+}
+
+# Run all installations
+print_message "Starting Linux package installation..."
+install_git_and_curl
+install_zsh
+install_wezterm
+install_eza
+install_bat
+install_fzf
+install_zoxide
+install_tldr
+
+print_message "Linux package installation complete!"
+print_message "Note: If Zsh was just installed, restart your terminal for changes to take effect."
+{{- end }}
