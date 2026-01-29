@@ -1,8 +1,39 @@
 # VSCode Recommended Extensions
 
-## Installation
+## ⚠️ IMPORTANT: Install Extensions First
 
-Install all at once:
+**Before opening VSCode with the dotfiles settings**, install the required extensions to avoid formatter errors.
+
+The dotfiles include `settings.json` with pre-configured formatters. VSCode will show errors like:
+```
+Value is not accepted. Valid values: "esbenp.prettier-vscode"...
+```
+
+These errors occur because the formatter extensions aren't installed yet.
+
+### Quick Fix - Install Essential Extensions First
+
+Run this **BEFORE** applying dotfiles or opening VSCode:
+
+```bash
+# Essential formatters (fixes all defaultFormatter errors)
+code --install-extension esbenp.prettier-vscode \
+  --install-extension Shopify.ruby-lsp \
+  --install-extension ms-python.black-formatter \
+  --install-extension rust-lang.rust-analyzer \
+  --install-extension foxundermoon.shell-format \
+  --install-extension ms-azuretools.vscode-docker
+```
+
+Then restart VSCode - no more errors!
+
+---
+
+## Full Installation
+
+### Install All Extensions (Recommended)
+
+Install all recommended extensions at once:
 ```bash
 # Copy and paste this entire block into your terminal
 code --install-extension enkia.tokyo-night \

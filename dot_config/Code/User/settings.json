@@ -84,8 +84,9 @@
   // =========================
   // JavaScript/TypeScript
   // =========================
+  // Note: Uncomment after installing extensions (see docs/vscode-extensions.md)
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Install: code --install-extension esbenp.prettier-vscode
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
