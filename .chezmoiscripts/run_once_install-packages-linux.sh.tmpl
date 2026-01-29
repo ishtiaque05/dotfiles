@@ -130,6 +130,30 @@ install_tldr() {
   fi
 }
 
+# Install Neovim
+install_neovim() {
+  if ! command -v nvim &> /dev/null; then
+    print_message "Installing Neovim..."
+    sudo apt update -y
+    sudo apt install -y neovim
+    print_message "Neovim installed."
+  else
+    print_message "Neovim is already installed."
+  fi
+}
+
+# Install Tmux
+install_tmux() {
+  if ! command -v tmux &> /dev/null; then
+    print_message "Installing Tmux..."
+    sudo apt update -y
+    sudo apt install -y tmux
+    print_message "Tmux installed."
+  else
+    print_message "Tmux is already installed."
+  fi
+}
+
 # Run all installations
 print_message "Starting Linux package installation..."
 install_git_and_curl
