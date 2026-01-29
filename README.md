@@ -149,10 +149,23 @@ Configuration files use Go templates with OS conditionals:
 
 Some configurations require manual setup after installation:
 
-1. **Powerlevel10k Configuration**: Run `p10k configure` to customize your prompt
-2. **WezTerm Font**: Verify MesloLGS NF is selected in WezTerm settings
-3. **Bat Theme**: Optionally install Tokyo Night theme (see [this guide](https://www.josean.com/posts/7-amazing-cli-tools))
-4. **Neovim Plugins**: LazyVim will auto-install plugins on first launch (just wait)
+1. **VSCode Extensions** (IMPORTANT - Do this first!): Install extensions before opening VSCode to avoid formatter errors
+   ```bash
+   # Essential formatters
+   code --install-extension esbenp.prettier-vscode \
+     --install-extension Shopify.ruby-lsp \
+     --install-extension ms-python.black-formatter \
+     --install-extension rust-lang.rust-analyzer
+   ```
+   See [docs/vscode-extensions.md](docs/vscode-extensions.md) for complete list
+
+2. **Powerlevel10k Configuration**: Run `p10k configure` to customize your prompt
+
+3. **WezTerm Font**: Verify MesloLGS NF is selected in WezTerm settings
+
+4. **Bat Theme**: Optionally install Tokyo Night theme (see [this guide](https://www.josean.com/posts/7-amazing-cli-tools))
+
+5. **Neovim Plugins**: LazyVim will auto-install plugins on first launch (just wait)
 
 ## Troubleshooting
 
