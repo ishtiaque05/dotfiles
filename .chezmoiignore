@@ -1,0 +1,32 @@
+# Files and directories to ignore when applying dotfiles
+# These files stay in the repo but won't be copied to $HOME
+
+# Documentation
+README.md
+LICENSE
+*.md
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# Chezmoi files
+.chezmoi.toml.tmpl
+.chezmoiignore
+
+# Legacy installation scripts (will be replaced by chezmoi scripts)
+install.sh
+install.mac.sh
+
+# Claude AI folder
+.claude/
+
+# OS-specific files that are now templated
+.zshrc.mac
+
+# Temporary and backup files
+*.bak
+*.old
+*.tmp
+.DS_Store
