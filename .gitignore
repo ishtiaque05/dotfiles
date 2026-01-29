@@ -1,0 +1,18 @@
+# Claude AI planning folder (local only)
+.claude/
+
+# Backup files
+*.bak
+*.old
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
