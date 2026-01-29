@@ -1,0 +1,24 @@
+{{- if eq .chezmoi.os "darwin" }}
+# Brewfile for macOS
+# Install with: brew bundle install
+# Check status: brew bundle check
+# Cleanup unused: brew bundle cleanup
+
+# Taps (third-party repositories)
+tap "wez/wezterm"
+
+# Core tools
+brew "git"
+brew "curl"
+brew "zsh"
+
+# Modern CLI tools
+brew "eza"        # Modern ls replacement
+brew "bat"        # Modern cat replacement
+brew "fzf"        # Fuzzy finder
+brew "zoxide"     # Smart cd replacement
+brew "tldr"       # Simplified man pages
+
+# Applications
+cask "wezterm"    # Terminal emulator
+{{- end }}

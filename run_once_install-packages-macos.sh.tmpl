@@ -4,7 +4,7 @@
 # =========================
 # macOS Package Installation
 # =========================
-# This script installs packages and tools for macOS using Homebrew
+# This script installs Homebrew and uses Brewfile for package management
 # Runs once on first chezmoi apply
 
 set -e
@@ -14,137 +14,48 @@ print_message() {
 }
 
 # Install Homebrew
-install_homebrew() {
-  if ! command -v brew &> /dev/null; then
-    print_message "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+if ! command -v brew &> /dev/null; then
+  print_message "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    # Add Homebrew to PATH (for both Intel and Apple Silicon Macs)
-    if [[ $(uname -m) == "arm64" ]]; then
-      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-    else
-      echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
-      eval "$(/usr/local/bin/brew shellenv)"
-    fi
-    print_message "Homebrew installed."
+  # Add Homebrew to PATH (for both Intel and Apple Silicon Macs)
+  if [[ $(uname -m) == "arm64" ]]; then
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
   else
-    print_message "Homebrew is already installed."
+    echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
+    eval "$(/usr/local/bin/brew shellenv)"
   fi
-}
+  print_message "Homebrew installed."
+else
+  print_message "Homebrew is already installed."
+fi
 
-# Install Git and curl
-install_git_and_curl() {
-  if ! command -v git &> /dev/null; then
-    print_message "Installing Git..."
-    brew install git
-  else
-    print_message "Git is already installed."
-  fi
+# Install packages from Brewfile
+if [ -f "$HOME/Brewfile" ]; then
+  print_message "Installing packages from Brewfile..."
+  brew bundle install --file="$HOME/Brewfile"
+  print_message "Packages installed via Brewfile."
+else
+  print_message "Warning: Brewfile not found at $HOME/Brewfile"
+fi
 
-  if ! command -v curl &> /dev/null; then
-    print_message "Installing curl..."
-    brew install curl
-  else
-    print_message "curl is already installed."
-  fi
-}
+# Change default shell to Zsh (Brewfile can't do this)
+if [[ "$SHELL" != *"zsh"* ]]; then
+  print_message "Changing default shell to Zsh..."
+  chsh -s $(which zsh)
+  print_message "Default shell changed to Zsh. Restart your terminal for changes to take effect."
+else
+  print_message "Zsh is already the default shell."
+fi
 
-# Install and configure Zsh
-install_zsh() {
-  if [[ "$SHELL" != *"zsh"* ]]; then
-    print_message "Installing Zsh..."
-    brew install zsh
-
-    print_message "Changing default shell to Zsh..."
-    chsh -s $(which zsh)
-    print_message "Zsh installed. You may need to restart your terminal."
-  else
-    print_message "Zsh is already the default shell."
-  fi
-}
-
-# Install WezTerm
-install_wezterm() {
-  if ! command -v wezterm &> /dev/null; then
-    print_message "Installing WezTerm..."
-    brew install --cask wezterm
-    print_message "WezTerm installed."
-  else
-    print_message "WezTerm is already installed."
-  fi
-}
-
-# Install eza (modern ls replacement)
-install_eza() {
-  if ! command -v eza &> /dev/null; then
-    print_message "Installing eza..."
-    brew install eza
-    print_message "eza installed."
-  else
-    print_message "eza is already installed."
-  fi
-}
-
-# Install bat (modern cat replacement)
-install_bat() {
-  if ! command -v bat &> /dev/null; then
-    print_message "Installing bat..."
-    brew install bat
-    print_message "bat installed."
-  else
-    print_message "bat is already installed."
-  fi
-}
-
-# Install fzf (fuzzy finder)
-install_fzf() {
-  if ! command -v fzf &> /dev/null; then
-    print_message "Installing fzf..."
-    brew install fzf
-
-    # Setup shell integration
+# Setup fzf shell integration
+if command -v fzf &> /dev/null; then
+  if [ ! -f "$HOME/.fzf.zsh" ]; then
+    print_message "Setting up fzf shell integration..."
     $(brew --prefix)/opt/fzf/install --all
-    print_message "fzf installed."
-  else
-    print_message "fzf is already installed."
   fi
-}
-
-# Install zoxide (smart cd replacement)
-install_zoxide() {
-  if ! command -v zoxide &> /dev/null; then
-    print_message "Installing zoxide..."
-    brew install zoxide
-    print_message "zoxide installed."
-  else
-    print_message "zoxide is already installed."
-  fi
-}
-
-# Install tldr (simplified man pages)
-install_tldr() {
-  if ! command -v tldr &> /dev/null; then
-    print_message "Installing tldr..."
-    brew install tldr
-    print_message "tldr installed."
-  else
-    print_message "tldr is already installed."
-  fi
-}
-
-# Run all installations
-print_message "Starting macOS package installation..."
-install_homebrew
-install_git_and_curl
-install_zsh
-install_wezterm
-install_eza
-install_bat
-install_fzf
-install_zoxide
-install_tldr
+fi
 
 print_message "macOS package installation complete!"
-print_message "Note: If Zsh was just installed, restart your terminal for changes to take effect."
 {{- end }}
