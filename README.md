@@ -9,7 +9,7 @@ Cross-platform dotfiles managed with [Chezmoi](https://www.chezmoi.io/) for auto
 Install dotfiles with a single command:
 
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply syedtaqi95/dotfiles
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply ishtiaque05/dotfiles
 ```
 
 This will:
@@ -28,7 +28,7 @@ If you prefer to do it step by step:
 sh -c "$(curl -fsLS get.chezmoi.io)"
 
 # Initialize with this repo
-chezmoi init syedtaqi95/dotfiles
+chezmoi init ishtiaque05/dotfiles
 
 # Preview what will be changed
 chezmoi diff
