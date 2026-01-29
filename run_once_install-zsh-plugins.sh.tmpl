@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# =========================
+# Install Zsh Plugins
+# =========================
+# This script installs Powerlevel10k theme and Zsh plugins
+# Runs once on first chezmoi apply
+
+set -e
+
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+# Install Powerlevel10k theme
+if [ ! -d "$HOME/powerlevel10k" ]; then
+  print_message "Installing Powerlevel10k theme..."
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
+  print_message "Powerlevel10k theme installed."
+else
+  print_message "Powerlevel10k is already installed."
+fi
+
+# Install Zsh Autosuggestions plugin
+if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
+  print_message "Installing Zsh Autosuggestions plugin..."
+  git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+  print_message "Zsh Autosuggestions plugin installed."
+else
+  print_message "Zsh Autosuggestions is already installed."
+fi
+
+# Install Zsh Syntax Highlighting plugin
+if [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ]; then
+  print_message "Installing Zsh Syntax Highlighting plugin..."
+  git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
+  print_message "Zsh Syntax Highlighting plugin installed."
+else
+  print_message "Zsh Syntax Highlighting is already installed."
+fi
+
+print_message "Zsh plugins installation complete!"
