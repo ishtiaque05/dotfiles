@@ -7,166 +7,296 @@
 # This script installs packages and tools for Linux (Ubuntu/Debian)
 # Runs once on first chezmoi apply
 
-set -e
+set -e  # Exit on error
+set -o pipefail  # Catch errors in pipes
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Track installation results
+FAILED_PACKAGES=()
+SUCCESS_PACKAGES=()
 
 print_message() {
-  echo -e "\n[INFO]: $1"
+  echo -e "\n${BLUE}[INFO]${NC}: $1"
 }
 
-# Install Git and curl
-install_git_and_curl() {
-  if ! command -v git &> /dev/null; then
-    print_message "Installing Git..."
-    sudo apt update -y
-    sudo apt install git -y
-  else
-    print_message "Git is already installed."
-  fi
+print_success() {
+  echo -e "${GREEN}[SUCCESS]${NC}: $1"
+  SUCCESS_PACKAGES+=("$1")
+}
 
-  if ! command -v curl &> /dev/null; then
-    print_message "Installing curl..."
-    sudo apt update -y
-    sudo apt install curl -y
+print_error() {
+  echo -e "${RED}[ERROR]${NC}: $1"
+  FAILED_PACKAGES+=("$1")
+}
+
+print_warning() {
+  echo -e "${YELLOW}[WARNING]${NC}: $1"
+}
+
+# Error handler
+error_handler() {
+  print_error "An error occurred on line $1"
+  print_warning "Continuing with remaining installations..."
+}
+
+trap 'error_handler $LINENO' ERR
+
+# =========================
+# Simple APT Packages
+# =========================
+
+install_apt_packages() {
+  print_message "Installing core packages via apt..."
+
+  # List of packages to install
+  local packages=(
+    "git"
+    "curl"
+    "wget"
+    "zsh"
+    "neovim"
+    "tmux"
+    "tldr"
+  )
+
+  # Check which packages are missing
+  local to_install=()
+  for pkg in "${packages[@]}"; do
+    if ! dpkg -l | grep -q "^ii  $pkg "; then
+      to_install+=("$pkg")
+    else
+      print_success "$pkg already installed"
+    fi
+  done
+
+  # Install missing packages
+  if [ ${#to_install[@]} -gt 0 ]; then
+    print_message "Installing: ${to_install[*]}"
+    if sudo apt update -y && sudo apt install -y "${to_install[@]}"; then
+      print_success "Core packages installed"
+    else
+      print_error "Failed to install some core packages"
+      return 1
+    fi
   else
-    print_message "curl is already installed."
+    print_success "All core packages already installed"
   fi
 }
 
-# Install and configure Zsh
-install_zsh() {
-  if [[ "$SHELL" != *"zsh"* ]]; then
-    print_message "Installing Zsh..."
-    sudo apt update -y
-    sudo apt install zsh -y
+# =========================
+# Zsh Setup
+# =========================
 
-    print_message "Changing default shell to Zsh..."
-    chsh -s $(which zsh)
-    print_message "Zsh installed. You may need to restart your terminal."
+configure_zsh() {
+  print_message "Configuring Zsh as default shell..."
+
+  if [[ "$SHELL" == *"zsh"* ]]; then
+    print_success "Zsh already set as default shell"
+    return 0
+  fi
+
+  if command -v zsh &> /dev/null; then
+    if chsh -s "$(which zsh)"; then
+      print_success "Zsh set as default shell (restart terminal to activate)"
+    else
+      print_warning "Could not change default shell (may need manual setup)"
+    fi
   else
-    print_message "Zsh is already the default shell."
+    print_error "Zsh not found, cannot set as default"
+    return 1
   fi
 }
 
-# Install WezTerm
+# =========================
+# WezTerm
+# =========================
+
 install_wezterm() {
-  if ! command -v wezterm &> /dev/null; then
-    print_message "Installing WezTerm..."
-    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/wezterm-fury.gpg
-    echo 'deb [signed-by=/etc/apt/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
-    sudo apt update -y
-    sudo apt install wezterm -y
-    print_message "WezTerm installed."
-  else
-    print_message "WezTerm is already installed."
+  print_message "Checking WezTerm..."
+
+  if command -v wezterm &> /dev/null; then
+    print_success "WezTerm already installed"
+    return 0
   fi
+
+  print_message "Installing WezTerm..."
+  {
+    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/wezterm-fury.gpg &&
+    echo 'deb [signed-by=/etc/apt/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list &&
+    sudo apt update -y &&
+    sudo apt install -y wezterm &&
+    print_success "WezTerm installed"
+  } || {
+    print_error "WezTerm installation failed"
+    return 1
+  }
 }
 
-# Install eza (modern ls replacement)
+# =========================
+# Eza (modern ls)
+# =========================
+
 install_eza() {
-  if ! command -v eza &> /dev/null; then
-    print_message "Installing eza..."
-    sudo mkdir -p /etc/apt/keyrings
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt update
-    sudo apt install -y eza
-    print_message "eza installed."
-  else
-    print_message "eza is already installed."
+  print_message "Checking eza..."
+
+  if command -v eza &> /dev/null; then
+    print_success "eza already installed"
+    return 0
   fi
+
+  print_message "Installing eza..."
+  {
+    sudo mkdir -p /etc/apt/keyrings &&
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg &&
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list &&
+    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list &&
+    sudo apt update -y &&
+    sudo apt install -y eza &&
+    print_success "eza installed"
+  } || {
+    print_error "eza installation failed"
+    return 1
+  }
 }
 
-# Install bat (modern cat replacement)
+# =========================
+# Bat (modern cat)
+# =========================
+
 install_bat() {
-  if ! command -v bat &> /dev/null; then
-    print_message "Installing bat..."
-    sudo apt update -y
-    sudo apt install -y bat
+  print_message "Checking bat..."
+
+  if command -v bat &> /dev/null; then
+    print_success "bat already installed"
+    return 0
+  fi
+
+  print_message "Installing bat..."
+  {
+    sudo apt update -y &&
+    sudo apt install -y bat &&
 
     # Create symlink (Ubuntu/Debian installs as batcat)
     if [ ! -L "$HOME/.local/bin/bat" ]; then
-      mkdir -p ~/.local/bin
-      ln -sf /usr/bin/batcat ~/.local/bin/bat
-      print_message "Symlink created: ~/.local/bin/bat -> /usr/bin/batcat"
+      mkdir -p "$HOME/.local/bin" &&
+      ln -sf /usr/bin/batcat "$HOME/.local/bin/bat" &&
+      print_success "bat installed (symlink created)"
+    else
+      print_success "bat installed"
     fi
-  else
-    print_message "bat is already installed."
-  fi
+  } || {
+    print_error "bat installation failed"
+    return 1
+  }
 }
 
-# Install fzf (fuzzy finder)
+# =========================
+# Fzf (fuzzy finder)
+# =========================
+
 install_fzf() {
-  if [ ! -d "$HOME/.fzf" ]; then
-    print_message "Installing fzf..."
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install --all
-    print_message "fzf installed."
-  else
-    print_message "fzf is already installed."
+  print_message "Checking fzf..."
+
+  if [ -d "$HOME/.fzf" ]; then
+    print_success "fzf already installed"
+    return 0
   fi
+
+  print_message "Installing fzf..."
+  {
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" &&
+    "$HOME/.fzf/install" --all &&
+    print_success "fzf installed"
+  } || {
+    print_error "fzf installation failed"
+    return 1
+  }
 }
 
-# Install zoxide (smart cd replacement)
+# =========================
+# Zoxide (smart cd)
+# =========================
+
 install_zoxide() {
-  if ! command -v zoxide &> /dev/null; then
-    print_message "Installing zoxide..."
-    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-    print_message "zoxide installed."
-  else
-    print_message "zoxide is already installed."
+  print_message "Checking zoxide..."
+
+  if command -v zoxide &> /dev/null; then
+    print_success "zoxide already installed"
+    return 0
   fi
+
+  print_message "Installing zoxide..."
+  {
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh &&
+    print_success "zoxide installed"
+  } || {
+    print_error "zoxide installation failed"
+    return 1
+  }
 }
 
-# Install tldr (simplified man pages)
-install_tldr() {
-  if ! command -v tldr &> /dev/null; then
-    print_message "Installing tldr..."
-    sudo apt update -y
-    sudo apt install -y tldr
-    print_message "tldr installed."
-  else
-    print_message "tldr is already installed."
-  fi
-}
+# =========================
+# Main Installation
+# =========================
 
-# Install Neovim
-install_neovim() {
-  if ! command -v nvim &> /dev/null; then
-    print_message "Installing Neovim..."
-    sudo apt update -y
-    sudo apt install -y neovim
-    print_message "Neovim installed."
-  else
-    print_message "Neovim is already installed."
-  fi
-}
-
-# Install Tmux
-install_tmux() {
-  if ! command -v tmux &> /dev/null; then
-    print_message "Installing Tmux..."
-    sudo apt update -y
-    sudo apt install -y tmux
-    print_message "Tmux installed."
-  else
-    print_message "Tmux is already installed."
-  fi
-}
-
-# Run all installations
 print_message "Starting Linux package installation..."
-install_git_and_curl
-install_zsh
+echo "=================================="
+
+# Run all installations (continue on error)
+set +e  # Don't exit on error for individual packages
+
+install_apt_packages
+configure_zsh
 install_wezterm
-install_neovim
-install_tmux
 install_eza
 install_bat
 install_fzf
 install_zoxide
-install_tldr
 
+set -e  # Re-enable exit on error
+
+# =========================
+# Installation Summary
+# =========================
+
+echo ""
+echo "=================================="
+print_message "Installation Summary"
+echo "=================================="
+
+if [ ${#SUCCESS_PACKAGES[@]} -gt 0 ]; then
+  echo -e "${GREEN}Successful:${NC}"
+  for pkg in "${SUCCESS_PACKAGES[@]}"; do
+    echo -e "  ${GREEN}✓${NC} $pkg"
+  done
+fi
+
+if [ ${#FAILED_PACKAGES[@]} -gt 0 ]; then
+  echo ""
+  echo -e "${RED}Failed:${NC}"
+  for pkg in "${FAILED_PACKAGES[@]}"; do
+    echo -e "  ${RED}✗${NC} $pkg"
+  done
+  echo ""
+  print_warning "Some packages failed to install. Check errors above."
+  print_message "You can retry failed packages manually or run 'chezmoi apply' again."
+else
+  echo ""
+  print_success "All packages installed successfully!"
+fi
+
+echo "=================================="
 print_message "Linux package installation complete!"
-print_message "Note: If Zsh was just installed, restart your terminal for changes to take effect."
+
+if [[ "$SHELL" != *"zsh"* ]]; then
+  echo ""
+  print_warning "Zsh installed but not active yet. Restart your terminal to use it."
+fi
+
 {{- end }}
