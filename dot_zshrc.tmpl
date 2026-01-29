@@ -83,12 +83,10 @@ source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # =========================
-# Aliases and Tools: https://www.josean.com/posts/7-amazing-cli-tools
+# Load Aliases
 # =========================
 
-# Eza (better ls)
-
-alias ls="eza --icons=always"
+[[ -f ~/.aliases ]] && source ~/.aliases
 
 # =========================
 # Fuzzy Finder (FZF)
