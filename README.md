@@ -43,6 +43,13 @@ chezmoi apply
 - **Shell**: Zsh with Powerlevel10k theme
 - **Terminal**: WezTerm
 - **Font**: MesloLGS Nerd Font
+- **Multiplexer**: Tmux with vim-style keybindings
+
+### Editor
+- **Neovim**: LazyVim distribution with LSP support
+- **Languages**: Ruby, Rust, TypeScript, React, Python, Shell
+- **Features**: File explorer, fuzzy finding, git integration, auto-completion
+- **Docs**: See [docs/neovim-keybindings.md](docs/neovim-keybindings.md)
 
 ### Zsh Plugins
 - zsh-autosuggestions
@@ -54,6 +61,11 @@ chezmoi apply
 - **fzf**: Fuzzy finder
 - **zoxide**: Smarter `cd` command
 - **tldr**: Simplified man pages
+
+### Aliases
+- Git shortcuts (`gs`, `gco`, `gp`, etc.)
+- Rails commands (`rc`, `rs`, `rdm`, etc.)
+- See `~/.aliases` for full list
 
 ## Updating Dotfiles
 
@@ -111,6 +123,11 @@ Configuration files use Go templates with OS conditionals:
 {{ end }}
 ```
 
+## Documentation
+
+- [Neovim Keybindings](docs/neovim-keybindings.md) - Complete Neovim/LazyVim shortcuts
+- [Tmux Keybindings](docs/tmux-keybindings.md) - Tmux commands and workflows
+
 ## Manual Steps
 
 Some configurations require manual setup after installation:
@@ -118,6 +135,7 @@ Some configurations require manual setup after installation:
 1. **Powerlevel10k Configuration**: Run `p10k configure` to customize your prompt
 2. **WezTerm Font**: Verify MesloLGS NF is selected in WezTerm settings
 3. **Bat Theme**: Optionally install Tokyo Night theme (see [this guide](https://www.josean.com/posts/7-amazing-cli-tools))
+4. **Neovim Plugins**: LazyVim will auto-install plugins on first launch (just wait)
 
 ## Troubleshooting
 
