@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# =========================
+# Install Tokyo Night Theme for Bat
+# =========================
+# This script installs the Tokyo Night theme for bat
+# Runs once on first chezmoi apply
+
+set -e
+
+# Function to print messages
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+# Determine bat command (bat on macOS/manual install, batcat on Ubuntu)
+if command -v bat &> /dev/null; then
+  BAT_CMD="bat"
+elif command -v batcat &> /dev/null; then
+  BAT_CMD="batcat"
+else
+  print_message "bat/batcat not found, skipping theme installation"
+  exit 0
+fi
+
+# Get bat config directory
+BAT_CONFIG_DIR="$($BAT_CMD --config-dir)"
+BAT_THEME_DIR="$BAT_CONFIG_DIR/themes"
+
+# Install Tokyo Night theme
+if [ ! -f "$BAT_THEME_DIR/tokyonight_night.tmTheme" ]; then
+  print_message "Installing Tokyo Night theme for bat..."
+  mkdir -p "$BAT_THEME_DIR"
+
+  # Download Tokyo Night theme
+  if command -v curl &> /dev/null; then
+    curl -sL "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme" \
+      -o "$BAT_THEME_DIR/tokyonight_night.tmTheme"
+  elif command -v wget &> /dev/null; then
+    wget -q "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme" \
+      -O "$BAT_THEME_DIR/tokyonight_night.tmTheme"
+  else
+    print_message "ERROR: Neither curl nor wget found. Cannot download theme."
+    exit 1
+  fi
+
+  # Rebuild bat cache
+  $BAT_CMD cache --build > /dev/null 2>&1
+
+  print_message "Tokyo Night theme installed for bat."
+else
+  print_message "Tokyo Night theme for bat is already installed."
+fi
+
+print_message "Bat theme installation complete!"
