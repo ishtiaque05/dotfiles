@@ -195,6 +195,22 @@ chezmoi apply -v
 ### Legacy Scripts
 The old `install.sh` and `install.mac.sh` scripts are being phased out in favor of Chezmoi-managed installation.
 
+### Testing with Docker
+
+Test your dotfiles installation in isolated Docker containers:
+
+```bash
+# Quick automated test
+make test-linux
+make test-mac
+
+# Interactive testing (explore manually)
+make shell-linux
+make shell-mac
+```
+
+See [docker-tests/README.md](docker-tests/README.md) for detailed testing procedures.
+
 ## License
 
 MIT
