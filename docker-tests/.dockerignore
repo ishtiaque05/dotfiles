@@ -1,0 +1,17 @@
+# Ignore files that don't need to be in the Docker build context
+.git
+.gitignore
+*.md
+!CLAUDE.md
+docs/
+.github/
+.vscode/
+.idea/
+
+# Ignore Docker test files (they're accessed via dockerfile path)
+docker-tests/
+
+# Ignore temporary files
+*.log
+*.tmp
+.DS_Store

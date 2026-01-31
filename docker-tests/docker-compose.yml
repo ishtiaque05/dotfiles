@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  linux-test:
+    build:
+      context: ..
+      dockerfile: docker-tests/Dockerfile.linux
+    container_name: dotfiles-linux-test
+    image: dotfiles-test:linux
+    stdin_open: true
+    tty: true
+    volumes:
+      # Mount dotfiles as volume to test changes without rebuilding
+      - ..:/home/testuser/dotfiles:ro
+    environment:
+      - TERM=xterm-256color
+
+  mac-test:
+    build:
+      context: ..
+      dockerfile: docker-tests/Dockerfile.mac
+    container_name: dotfiles-mac-test
+    image: dotfiles-test:mac
+    stdin_open: true
+    tty: true
+    volumes:
+      # Mount dotfiles as volume to test changes without rebuilding
+      - ..:/home/testuser/dotfiles:ro
+    environment:
+      - TERM=xterm-256color
