@@ -1,0 +1,52 @@
+# Dockerfile for testing dotfiles installation on Linux (Ubuntu)
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    sudo \
+    wget \
+    locales \
+    gpg \
+    gnupg \
+    ca-certificates \
+    fontconfig \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up locale
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+
+# Create a non-root user for testing (similar to real user environment)
+# Password is "test" for any interactive prompts
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser:test" | chpasswd && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Switch to test user
+USER testuser
+WORKDIR /home/testuser
+
+# Install Chezmoi using the install script with proper path
+RUN mkdir -p "$HOME/.local/bin" && \
+    curl -fsLS https://get.chezmoi.io | sh -s -- -b "$HOME/.local/bin" && \
+    ls -la "$HOME/.local/bin/chezmoi"
+
+# Add to PATH
+ENV PATH="$HOME/.local/bin:$PATH"
+
+# Copy the dotfiles repository into the container as a local source
+COPY --chown=testuser:testuser . /home/testuser/dotfiles-source
+
+# Set working directory
+WORKDIR /home/testuser
+
+# Default command runs Chezmoi installation
+CMD ["bash", "-c", "export PATH=$HOME/.local/bin:$PATH && echo '=== Starting Chezmoi Dotfiles Installation ===' && $HOME/.local/bin/chezmoi init --apply --source=/home/testuser/dotfiles-source && echo '' && echo '=== Installation Complete! ===' && echo '' && echo 'To configure your Powerlevel10k prompt, run:' && echo '  p10k configure' && echo '' && exec zsh -i"]
