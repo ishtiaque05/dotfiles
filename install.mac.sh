@@ -227,6 +227,31 @@ install_bat() {
   fi
 }
 
+# Function to install Tokyo Night theme for bat
+install_bat_tokyo_night_theme() {
+  BAT_THEME_DIR="$(bat --config-dir)/themes"
+
+  if [ ! -f "$BAT_THEME_DIR/tokyonight_night.tmTheme" ]; then
+    print_message "Installing Tokyo Night theme for bat..."
+    mkdir -p "$BAT_THEME_DIR"
+
+    # Download Tokyo Night theme
+    curl -sL "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme" \
+      -o "$BAT_THEME_DIR/tokyonight_night.tmTheme"
+
+    # Rebuild bat cache
+    bat cache --build > /dev/null 2>&1
+
+    # Add theme configuration to .zshrc if not already present
+    if ! grep -q "export BAT_THEME=" ~/.zshrc; then
+      echo 'export BAT_THEME="tokyonight_night"' >> ~/.zshrc
+      print_message "Tokyo Night theme installed and set as default for bat."
+    fi
+  else
+    print_message "Tokyo Night theme for bat is already installed."
+  fi
+}
+
 # Function to install tldr
 install_tldr() {
   if ! command -v tldr &> /dev/null; then
@@ -260,6 +285,7 @@ install_zsh_autosuggestions
 install_powerlvl10k
 install_eza
 install_bat
+install_bat_tokyo_night_theme
 install_tldr
 install_fzf
 install_zoxide
@@ -275,4 +301,4 @@ else
   print_message "Powerlevel10k is not properly installed. Skipping configuration wizard."
 fi
 
-print_message "Don't forget to add tokyo-night bat theme. See here: https://www.josean.com/posts/7-amazing-cli-tools"
+print_message "Installation complete! Tokyo Night theme has been configured for bat."

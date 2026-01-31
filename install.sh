@@ -154,12 +154,24 @@ install_eza() {
   if ! command -v eza &> /dev/null; then
     print_message "Installing eza (modern replacement for ls)..."
     sudo mkdir -p /etc/apt/keyrings
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt update
-    sudo apt install -y eza
-    print_message "eza has been installed."
+
+    # Add GPG key with proper error handling
+    if wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg 2>/dev/null; then
+      echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list > /dev/null
+      sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+      sudo apt update 2>/dev/null
+      sudo apt install -y eza
+      print_message "eza has been installed."
+    else
+      print_message "Warning: Could not install eza from repository. Trying alternative method..."
+      # Fallback: install from GitHub releases
+      EZA_VERSION=$(curl -s "https://api.github.com/repos/eza-community/eza/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+      wget -q "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz" -O /tmp/eza.tar.gz
+      sudo tar -xzf /tmp/eza.tar.gz -C /usr/local/bin eza
+      sudo chmod +x /usr/local/bin/eza
+      rm /tmp/eza.tar.gz
+      print_message "eza has been installed from GitHub releases."
+    fi
   else
     print_message "eza is already installed."
   fi
@@ -223,6 +235,31 @@ install_bat() {
   fi
 }
 
+# Function to install Tokyo Night theme for bat
+install_bat_tokyo_night_theme() {
+  BAT_THEME_DIR="$(batcat --config-dir)/themes"
+
+  if [ ! -f "$BAT_THEME_DIR/tokyonight_night.tmTheme" ]; then
+    print_message "Installing Tokyo Night theme for bat..."
+    mkdir -p "$BAT_THEME_DIR"
+
+    # Download Tokyo Night theme
+    wget -q "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme" \
+      -O "$BAT_THEME_DIR/tokyonight_night.tmTheme"
+
+    # Rebuild bat cache
+    batcat cache --build > /dev/null 2>&1
+
+    # Add theme configuration to .zshrc if not already present
+    if ! grep -q "export BAT_THEME=" ~/.zshrc; then
+      echo 'export BAT_THEME="tokyonight_night"' >> ~/.zshrc
+      print_message "Tokyo Night theme installed and set as default for bat."
+    fi
+  else
+    print_message "Tokyo Night theme for bat is already installed."
+  fi
+}
+
 # Function to install tldr
 install_tldr() {
   if ! command -v tldr &> /dev/null; then
@@ -245,6 +282,7 @@ install_zsh_autosuggestions
 install_powerlvl10k
 install_eza
 install_bat
+install_bat_tokyo_night_theme
 install_tldr
 install_fzf
 install_zoxide
@@ -258,4 +296,4 @@ else
   print_message "Powerlevel10k is not properly installed. Skipping configuration wizard."
 fi
 
-print_message "Don't forget to add tokoyo bat theme. See here: https://www.josean.com/posts/7-amazing-cli-tools"
+print_message "Installation complete! Tokyo Night theme has been configured for bat."
