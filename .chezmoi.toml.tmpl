@@ -1,0 +1,32 @@
+# Chezmoi configuration file
+# This file is templated and will be processed during initialization
+
+[data]
+    # OS detection (automatically set by chezmoi)
+    # Available variables:
+    # - .chezmoi.os: "linux" or "darwin"
+    # - .chezmoi.arch: "amd64", "arm64", etc.
+    # - .chezmoi.hostname: machine hostname
+    # - .chezmoi.username: current user
+
+    # You can add custom variables here
+    # email = "{{ .chezmoi.username }}@example.com"
+
+[diff]
+    # Use a better diff tool if available
+    command = "diff"
+    args = ["-u"]
+
+[merge]
+    # Merge tool configuration
+    command = "vimdiff"
+
+[edit]
+    # Editor for 'chezmoi edit'
+    command = "vim"
+
+# Git integration
+[git]
+    # Auto commit and push changes
+    autoCommit = false
+    autoPush = false

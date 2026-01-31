@@ -1,0 +1,5 @@
+# Powerlevel10k overrides
+typeset -g POWERLEVEL9K_DIR_SHORTENED_LENGTH=2
+typeset -g POWERLEVEL9K_DIR_MAX_LENGTH=0
+typeset -g POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_last
+typeset -g POWERLEVEL9K_DIR_BACKGROUND=0

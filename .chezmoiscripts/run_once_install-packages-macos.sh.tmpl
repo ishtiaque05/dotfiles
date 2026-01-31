@@ -1,0 +1,61 @@
+#!/bin/bash
+{{- if eq .chezmoi.os "darwin" }}
+
+# =========================
+# macOS Package Installation
+# =========================
+# This script installs Homebrew and uses Brewfile for package management
+# Runs once on first chezmoi apply
+
+set -e
+
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+# Install Homebrew
+if ! command -v brew &> /dev/null; then
+  print_message "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  # Add Homebrew to PATH (for both Intel and Apple Silicon Macs)
+  if [[ $(uname -m) == "arm64" ]]; then
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  else
+    echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+  print_message "Homebrew installed."
+else
+  print_message "Homebrew is already installed."
+fi
+
+# Install packages from Brewfile
+if [ -f "$HOME/Brewfile" ]; then
+  print_message "Installing packages from Brewfile..."
+  brew bundle install --file="$HOME/Brewfile"
+  print_message "Packages installed via Brewfile."
+else
+  print_message "Warning: Brewfile not found at $HOME/Brewfile"
+fi
+
+# Change default shell to Zsh (Brewfile can't do this)
+if [[ "$SHELL" != *"zsh"* ]]; then
+  print_message "Changing default shell to Zsh..."
+  chsh -s $(which zsh)
+  print_message "Default shell changed to Zsh. Restart your terminal for changes to take effect."
+else
+  print_message "Zsh is already the default shell."
+fi
+
+# Setup fzf shell integration
+if command -v fzf &> /dev/null; then
+  if [ ! -f "$HOME/.fzf.zsh" ]; then
+    print_message "Setting up fzf shell integration..."
+    $(brew --prefix)/opt/fzf/install --all
+  fi
+fi
+
+print_message "macOS package installation complete!"
+{{- end }}
