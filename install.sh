@@ -6,24 +6,15 @@ print_message() {
 }
 
 install_git_and_curl() {
-  # Check if Git is installed
-  if ! command -v git &> /dev/null; then
-    print_message "Git is not installed. Installing Git..."
-    sudo apt update -y
-    sudo apt install git -y
-    print_message "Git has been installed."
-  else
-    print_message "Git is already installed."
-  fi
+  # Install essential packages
+  print_message "Installing essential packages..."
+  sudo apt update -y
+  sudo apt install -y git curl wget gpg gnupg ca-certificates fontconfig
 
-  # Check if curl is installed
-  if ! command -v curl &> /dev/null; then
-    print_message "curl is not installed. Installing curl..."
-    sudo apt update -y
-    sudo apt install curl -y
-    print_message "curl has been installed."
+  if command -v git &> /dev/null && command -v curl &> /dev/null; then
+    print_message "Essential packages installed."
   else
-    print_message "curl is already installed."
+    print_message "Warning: Some packages may have failed to install."
   fi
 }
 
