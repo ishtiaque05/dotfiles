@@ -133,6 +133,7 @@ _fzf_comprun() {
 # =========================
 
 export BAT_THEME=tokyonight_night
+alias cat="bat --paging=never"
 
 # Zoxide (better cd)
 eval "$(zoxide init zsh)"

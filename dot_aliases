@@ -50,3 +50,4 @@ alias bers="bundle exec rails server"
 # =========================
 
 alias ls="eza --icons=always"
+alias cat="bat --paging=never"
