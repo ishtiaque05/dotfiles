@@ -148,7 +148,7 @@ install_eza() {
 
     # Add GPG key with proper error handling
     if wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg 2>/dev/null; then
-      echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list > /dev/null
+      echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] https://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list > /dev/null
       sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
       sudo apt update 2>/dev/null
       sudo apt install -y eza
@@ -156,11 +156,11 @@ install_eza() {
     else
       print_message "Warning: Could not install eza from repository. Trying alternative method..."
       # Fallback: install from GitHub releases
-      EZA_VERSION=$(curl -s "https://api.github.com/repos/eza-community/eza/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
-      wget -q "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz" -O /tmp/eza.tar.gz
-      sudo tar -xzf /tmp/eza.tar.gz -C /usr/local/bin eza
+      TEMP_FILE=$(mktemp)
+      wget -q "https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-gnu.tar.gz" -O "$TEMP_FILE"
+      sudo tar -xzf "$TEMP_FILE" -C /usr/local/bin eza
       sudo chmod +x /usr/local/bin/eza
-      rm /tmp/eza.tar.gz
+      rm "$TEMP_FILE"
       print_message "eza has been installed from GitHub releases."
     fi
   else
