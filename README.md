@@ -189,9 +189,6 @@ chezmoi apply -v
 
 ## Development
 
-### Current Status
-🚧 Migration to Chezmoi in progress. See `.claude/plan.md` for details.
-
 ### Legacy Scripts
 The old `install.sh` and `install.mac.sh` scripts are being phased out in favor of Chezmoi-managed installation.
 
