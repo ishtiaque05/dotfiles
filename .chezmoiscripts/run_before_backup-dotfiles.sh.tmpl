@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# =========================
+# Backup Existing Dotfiles
+# =========================
+# Runs BEFORE every chezmoi apply
+# Creates timestamped backups of existing configs so you can rollback
+
+BACKUP_DIR="$HOME/.dotfiles-backup/$(date +%Y-%m-%d_%H%M%S)"
+
+# Files to back up (only if they exist)
+FILES_TO_BACKUP=(
+  "$HOME/.zshrc"
+  "$HOME/.aliases"
+  "$HOME/.p10k-overrides.zsh"
+  "$HOME/.editorconfig"
+  "$HOME/.tmux.conf"
+  "$HOME/.wezterm.lua"
+)
+
+DIRS_TO_BACKUP=(
+  "$HOME/.config/nvim"
+  "$HOME/.config/tmux"
+  "$HOME/.config/wezterm"
+)
+
+# Check if any files actually exist to back up
+has_files=false
+for f in "${FILES_TO_BACKUP[@]}"; do
+  [ -f "$f" ] && has_files=true && break
+done
+for d in "${DIRS_TO_BACKUP[@]}"; do
+  [ -d "$d" ] && has_files=true && break
+done
+
+if [ "$has_files" = false ]; then
+  echo "[BACKUP]: No existing dotfiles found, skipping backup"
+  exit 0
+fi
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+
+# Back up individual files
+for f in "${FILES_TO_BACKUP[@]}"; do
+  if [ -f "$f" ]; then
+    cp "$f" "$BACKUP_DIR/$(basename "$f")"
+  fi
+done
+
+# Back up directories
+for d in "${DIRS_TO_BACKUP[@]}"; do
+  if [ -d "$d" ]; then
+    cp -r "$d" "$BACKUP_DIR/$(basename "$d")"
+  fi
+done
+
+echo "[BACKUP]: Dotfiles backed up to $BACKUP_DIR"
+
+# Clean up old backups (keep last 5)
+BACKUP_ROOT="$HOME/.dotfiles-backup"
+BACKUP_COUNT=$(ls -1d "$BACKUP_ROOT"/20* 2>/dev/null | wc -l)
+if [ "$BACKUP_COUNT" -gt 5 ]; then
+  ls -1d "$BACKUP_ROOT"/20* | head -n -5 | xargs rm -rf
+  echo "[BACKUP]: Cleaned old backups, keeping last 5"
+fi

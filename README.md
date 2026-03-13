@@ -1,212 +1,240 @@
 # Dotfiles
 
-Cross-platform dotfiles managed with [Chezmoi](https://www.chezmoi.io/) for automated setup on Linux and macOS.
+Cross-platform terminal productivity environment managed with [chezmoi](https://www.chezmoi.io/). One command sets up everything on macOS or Linux.
 
-## Quick Installation
+```
+Wezterm (GPU-rendered terminal)
+  └── tmux (session multiplexer, persists across reboots)
+       ├── Window 1: Neovim (IDE-grade editor with LSP)
+       ├── Window 2: services (devcontainers, servers)
+       ├── Window 3: terminal (lazygit, shell)
+       └── ...
+```
 
-### First Time Setup
+**Theme:** Tokyo Night everywhere — Wezterm, tmux, Neovim, bat, delta.
 
-Install dotfiles with a single command:
+## Quick Start
+
+### One-Command Install
 
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply ishtiaque05/dotfiles
 ```
 
-This will:
-- Install Chezmoi
-- Clone this repository
-- Auto-detect your OS (Linux or macOS)
-- Apply the appropriate configurations
-- Run installation scripts
+This auto-detects your OS, installs all packages, applies configs, and sets up the full stack.
 
-### Manual Installation
-
-If you prefer to do it step by step:
+### Manual Install
 
 ```bash
-# Install Chezmoi
+# Install chezmoi
 sh -c "$(curl -fsLS get.chezmoi.io)"
 
-# Initialize with this repo
+# Preview changes first
 chezmoi init ishtiaque05/dotfiles
-
-# Preview what will be changed
 chezmoi diff
 
-# Apply the dotfiles
+# Apply when ready
 chezmoi apply
+```
+
+### Post-Install (both platforms)
+
+```bash
+# 1. Install tmux plugins
+tmux                    # start tmux
+# Press Ctrl-a I        # installs TPM plugins
+
+# 2. Launch Neovim (plugins auto-install on first open)
+nvim
+
+# 3. Configure your prompt
+p10k configure
 ```
 
 ## What's Included
 
-### Terminal Setup
-- **Shell**: Zsh with Powerlevel10k theme
-- **Terminal**: WezTerm
-- **Font**: MesloLGS Nerd Font
-- **Multiplexer**: Tmux with vim-style keybindings
+### Terminal & Shell
 
-### Editors
+| Tool | Purpose | Config |
+|------|---------|--------|
+| [WezTerm](https://wezfurlong.org/wezterm/) | GPU-rendered terminal emulator | `~/.config/wezterm/wezterm.lua` |
+| [Zsh](https://www.zsh.org/) | Shell with completions and history | `~/.zshrc` |
+| [Powerlevel10k](https://github.com/romkatv/powerlevel10k) | Fast, customizable prompt | `~/.p10k.zsh` |
+| [MesloLGS NF](https://github.com/romkatv/powerlevel10k#fonts) | Nerd Font with icons | Auto-installed |
 
-#### Neovim (Terminal-based)
-- **LazyVim**: Modern Neovim distribution with LSP
-- **Languages**: Ruby, Rust, TypeScript, React, Python, Shell
-- **Features**: File explorer, fuzzy finding, git integration, auto-completion
-- **Docs**: [docs/neovim-keybindings.md](docs/neovim-keybindings.md)
+### Editor
 
-#### VSCode (GUI)
-- **Auto-save**: On focus change
-- **Auto-format**: Prettier, ESLint, Rubocop, Black (Python), rustfmt
-- **Languages**: Full LSP support for Ruby, Python, Rust, TypeScript, React, Shell, Docker
-- **Theme**: Tokyo Night with Material Icon Theme
-- **Extensions**: 25+ productivity extensions included
-- **Config**: `~/.config/Code/User/settings.json`
-- **Docs**: [docs/vscode-extensions.md](docs/vscode-extensions.md)
+| Tool | Purpose | Config |
+|------|---------|--------|
+| [Neovim](https://neovim.io/) + [LazyVim](https://www.lazyvim.org/) | IDE-grade terminal editor | `~/.config/nvim/` |
+| [VSCode](https://code.visualstudio.com/) | GUI editor settings | `~/.config/Code/User/settings.json` |
+| [EditorConfig](https://editorconfig.org/) | Cross-editor formatting | `~/.editorconfig` |
 
-#### EditorConfig
-- **Cross-editor**: Works with VSCode, Neovim, and other editors
-- **Consistent**: Maintains consistent coding styles (indentation, line endings)
-- **Config**: `~/.editorconfig`
+**Neovim LSP support:** Ruby, TypeScript, Python, Rust, GraphQL, JSON, YAML, Docker, Shell
 
-### Zsh Plugins
-- zsh-autosuggestions
-- zsh-syntax-highlighting
+### Multiplexer
 
-### Modern CLI Tools
-- **eza**: Modern replacement for `ls`
-- **bat**: Modern replacement for `cat`
-- **fzf**: Fuzzy finder
-- **zoxide**: Smarter `cd` command
-- **tldr**: Simplified man pages
+| Tool | Purpose | Config |
+|------|---------|--------|
+| [tmux](https://github.com/tmux/tmux) | Terminal multiplexer with session persistence | `~/.config/tmux/tmux.conf` |
+| [tmuxinator](https://github.com/tmuxinator/tmuxinator) | Declarative tmux session launcher | `~/.config/tmuxinator/*.yml` |
 
-### Aliases
-- Git shortcuts (`gs`, `gco`, `gp`, etc.)
-- Rails commands (`rc`, `rs`, `rdm`, etc.)
-- See `~/.aliases` for full list
+### Modern CLI Replacements
 
-## Updating Dotfiles
+| Tool | Replaces | How it activates |
+|------|----------|-----------------|
+| [eza](https://github.com/eza-community/eza) | `ls` | Aliased: `ls` runs `eza --icons=always` |
+| [bat](https://github.com/sharkdp/bat) | `cat` | Aliased: `cat` runs `bat --paging=never` |
+| [fd](https://github.com/sharkdp/fd) | `find` | Auto-used by fzf and Telescope as backend |
+| [fzf](https://github.com/junegunn/fzf) | history search | `Ctrl-R` (history), `Ctrl-T` (files) |
+| [zoxide](https://github.com/ajeetdsouza/zoxide) | `cd` | Aliased: `cd` uses smart directory jumping |
+| [lazygit](https://github.com/jesseduffield/lazygit) | `git` CLI | Alias: `lg` opens terminal git UI |
+| [git-delta](https://github.com/dandavison/delta) | `diff` | Auto-configured as `git diff` pager |
+| [tldr](https://github.com/tldr-pages/tldr) | `man` | `tldr <command>` for simplified help |
 
-Pull and apply the latest changes:
+### Shell Aliases
 
 ```bash
+# Git
+gs, ga, gco, gcb, gp, gpl, gd, glog, gst, gstp, gundo
+
+# Rails
+rc, rs, rr, rdm, rdr, be, ber, berc
+
+# Tools
+vim/vi → nvim    lg → lazygit    mux → tmuxinator
+ls → eza         cat → bat       cd → zoxide
+```
+
+See [`~/.aliases`](dot_aliases) for the full list.
+
+## Updating
+
+```bash
+# Pull latest and apply
 chezmoi update
-```
 
-## Managing Dotfiles
-
-### Add a new dotfile
-
-```bash
-chezmoi add ~/.config/newfile
-```
-
-### Edit a dotfile
-
-```bash
-chezmoi edit ~/.zshrc
-```
-
-### See what would change
-
-```bash
-chezmoi diff
-```
-
-### Apply changes
-
-```bash
+# Or apply changes only (no git pull)
 chezmoi apply
 ```
 
-## Structure
+Every `chezmoi apply` automatically backs up your existing configs to `~/.dotfiles-backup/` (keeps last 5).
 
-- `.chezmoi.toml.tmpl` - Chezmoi configuration
-- `.chezmoiignore` - Files to ignore when applying
-- `run_once_*.sh.tmpl` - Installation scripts (run once)
-- `dot_*` - Dotfiles (renamed from `.filename`)
+## Rollback
 
-## Platform-Specific Configs
+```bash
+# List available backups
+ls ~/.dotfiles-backup/
 
-Chezmoi automatically detects your OS and applies the correct configuration:
-- Linux: Uses `apt` package manager
-- macOS: Uses Homebrew
-
-Configuration files use Go templates with OS conditionals:
+# Restore a specific backup
+cp ~/.dotfiles-backup/2026-03-12_143000/.zshrc ~/
+cp -r ~/.dotfiles-backup/2026-03-12_143000/nvim ~/.config/
 ```
-{{ if eq .chezmoi.os "darwin" }}
+
+## Project Structure
+
+```
+dotfiles/
+├── .chezmoi.toml.tmpl              # Chezmoi config (variables, diff, merge tools)
+├── .chezmoiignore                  # Files excluded from $HOME (docs, scripts)
+├── .chezmoiscripts/
+│   ├── run_before_backup-dotfiles.sh.tmpl  # Backup before every apply
+│   ├── run_once_install-packages-macos.sh.tmpl  # Homebrew + Brewfile
+│   ├── run_once_install-packages-linux.sh.tmpl  # apt + custom installers
+│   ├── run_once_install-fonts.sh.tmpl           # MesloLGS Nerd Font
+│   ├── run_once_install-zsh-plugins.sh.tmpl     # p10k, autosuggestions, highlighting
+│   ├── run_once_install-tpm.sh.tmpl             # Tmux Plugin Manager
+│   ├── run_once_configure-git-delta.sh.tmpl     # Delta as git pager
+│   └── run_once_z-install-bat-theme.sh.tmpl     # Tokyo Night for bat
+├── Brewfile.tmpl                   # macOS Homebrew packages
+├── dot_zshrc.tmpl                  # Zsh config (OS-conditional)
+├── dot_aliases                     # Shell aliases
+├── dot_editorconfig                # Cross-editor formatting rules
+├── dot_p10k-overrides.zsh          # Powerlevel10k custom overrides
+├── dot_config/
+│   ├── nvim/                       # Neovim/LazyVim configuration
+│   │   ├── init.lua                # Plugin bootstrap + LazyVim extras
+│   │   └── lua/
+│   │       ├── config/
+│   │       │   ├── options.lua     # Editor options (tabs, search, scroll)
+│   │       │   ├── keymaps.lua     # Custom keybindings
+│   │       │   └── autocmds.lua    # Auto-commands (yank highlight, etc.)
+│   │       └── plugins/
+│   │           └── example.lua     # Tokyo Night theme + GraphQL LSP
+│   ├── tmux/
+│   │   └── tmux.conf               # tmux config (prefix, splits, plugins)
+│   ├── wezterm/
+│   │   └── wezterm.lua             # WezTerm config (font, colors, term)
+│   └── Code/User/
+│       └── settings.json           # VSCode settings
+├── docs/                           # Documentation
+│   ├── chezmoi-guide.md            # How chezmoi works in this project
+│   ├── cli-tools.md                # All CLI tools with usage examples
+│   ├── navigation-guide.md         # Daily workflow quick reference
+│   ├── neovim-keybindings.md       # Complete Neovim/LazyVim shortcuts
+│   ├── tmux-keybindings.md         # Tmux commands and workflows
+│   └── vscode-extensions.md        # VSCode extensions guide
+└── docker-tests/                   # Docker-based testing
+    ├── Dockerfile.linux
+    ├── Dockerfile.mac
+    └── test-installation.sh
+```
+
+## Platform Differences
+
+| Feature | macOS | Linux (Ubuntu/Debian) |
+|---------|-------|----------------------|
+| Package manager | Homebrew (Brewfile) | apt + manual installers |
+| Fonts directory | `~/Library/Fonts/` | `~/.local/share/fonts/` |
+| bat binary | `bat` | `batcat` (symlinked to `bat`) |
+| fd binary | `fd` | `fdfind` (symlinked to `fd`) |
+| Directory colors | `LSCOLORS` / `CLICOLOR` | `dircolors` |
+| Homebrew path | `/opt/homebrew` (ARM) or `/usr/local` (Intel) | N/A |
+
+Chezmoi handles all of this automatically using Go templates:
+
+```
+{{- if eq .chezmoi.os "darwin" }}
 # macOS-specific config
-{{ else if eq .chezmoi.os "linux" }}
+{{- else if eq .chezmoi.os "linux" }}
 # Linux-specific config
-{{ end }}
+{{- end }}
 ```
 
 ## Documentation
 
-- [Neovim Keybindings](docs/neovim-keybindings.md) - Complete Neovim/LazyVim shortcuts
-- [Tmux Keybindings](docs/tmux-keybindings.md) - Tmux commands and workflows
-- [VSCode Extensions](docs/vscode-extensions.md) - Recommended extensions and installation guide
-
-## Manual Steps
-
-Some configurations require manual setup after installation:
-
-1. **VSCode Extensions** (IMPORTANT - Do this first!): Install extensions before opening VSCode to avoid formatter errors
-   ```bash
-   # Essential formatters
-   code --install-extension esbenp.prettier-vscode \
-     --install-extension Shopify.ruby-lsp \
-     --install-extension ms-python.black-formatter \
-     --install-extension rust-lang.rust-analyzer
-   ```
-   See [docs/vscode-extensions.md](docs/vscode-extensions.md) for complete list
-
-2. **Powerlevel10k Configuration**: Run `p10k configure` to customize your prompt
-
-3. **WezTerm Font**: Verify MesloLGS NF is selected in WezTerm settings
-
-4. **Bat Theme**: Optionally install Tokyo Night theme (see [this guide](https://www.josean.com/posts/7-amazing-cli-tools))
-
-5. **Neovim Plugins**: LazyVim will auto-install plugins on first launch (just wait)
+| Guide | What it covers |
+|-------|---------------|
+| [Chezmoi Guide](docs/chezmoi-guide.md) | How chezmoi works, adding files, scripts, templates |
+| [CLI Tools](docs/cli-tools.md) | All CLI tools with usage examples |
+| [Navigation Guide](docs/navigation-guide.md) | Daily workflow quick reference |
+| [Neovim Keybindings](docs/neovim-keybindings.md) | Complete Neovim/LazyVim shortcuts |
+| [Tmux Keybindings](docs/tmux-keybindings.md) | Tmux commands and workflows |
+| [VSCode Extensions](docs/vscode-extensions.md) | Recommended VSCode extensions |
 
 ## Troubleshooting
 
-### Chezmoi commands not working
-Ensure `~/.local/bin` is in your PATH:
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
+| Problem | Fix |
+|---------|-----|
+| Colors wrong in tmux | Ensure Wezterm `term = "xterm-256color"` and tmux has `set -g default-terminal "tmux-256color"` |
+| Neovim plugins broken | `rm -rf ~/.local/share/nvim/lazy ~/.cache/nvim` then reopen nvim |
+| tmux plugins not loading | Press `Ctrl-a I` to install, or `git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm` |
+| Copy not working in tmux | Install tmux-yank: `Ctrl-a I` |
+| fzf is slow | Install `fd` — it replaces the default `find` backend |
+| Neovim LSP not working | Open nvim, run `:Mason` to check/install language servers |
+| `chezmoi` command not found | Add `export PATH="$HOME/.local/bin:$PATH"` to your shell |
+| Scripts not executing | `chezmoi apply --force` to re-run |
 
-### Scripts not executing
-Make sure scripts have executable permissions:
-```bash
-chezmoi apply --force
-```
-
-### See what Chezmoi is doing
-Run commands in verbose mode:
-```bash
-chezmoi apply -v
-```
-
-## Development
-
-### Legacy Scripts
-The old `install.sh` and `install.mac.sh` scripts are being phased out in favor of Chezmoi-managed installation.
-
-### Testing with Docker
-
-Test your dotfiles installation in isolated Docker containers:
+## Testing with Docker
 
 ```bash
-# Quick automated test
-make test-linux
-make test-mac
-
-# Interactive testing (explore manually)
-make shell-linux
-make shell-mac
+make test-linux    # Automated test in Linux container
+make test-mac      # Automated test in macOS container
+make shell-linux   # Interactive Linux shell
+make shell-mac     # Interactive macOS shell
 ```
 
-See [docker-tests/README.md](docker-tests/README.md) for detailed testing procedures.
+See [docker-tests/README.md](docker-tests/README.md) for details.
 
 ## License
 

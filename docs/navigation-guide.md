@@ -1,67 +1,62 @@
-# Terminal Productivity Stack — Navigation Guide
+# Terminal Productivity Stack — Quick Reference
 
-Your complete terminal productivity environment. Everything uses the **tokyonight** theme for visual consistency.
+Everything uses the **Tokyo Night** theme for visual consistency across all tools.
 
 ## Architecture
 
 ```
-Wezterm (terminal emulator)
-  └── tmux (session multiplexer)
-       ├── Window 1: nvim (editor)
-       ├── Window 2: services
-       ├── Window 3: terminal
+WezTerm (GPU-rendered terminal, xterm-256color)
+  └── tmux (Ctrl-a prefix, session persistence)
+       ├── Window 1: nvim (LazyVim, Space leader)
+       ├── Window 2: services (devcontainers)
+       ├── Window 3: terminal (lazygit, shell)
        └── ...
 ```
 
 ## Quick Start
 
 ```bash
-# Start tmux
-tmux
-
-# Or launch full dev environment (if tmuxinator configured)
-mux start thinkific
-
-# Reattach after closing terminal
-tmux a
+tmux                       # Start a tmux session
+mux start thinkific        # Or launch full dev environment
+tmux a                     # Reattach after closing terminal
 ```
 
 ---
 
-## Tool Overview
+## Tool Cheat Sheet
 
 | Tool | Command | Purpose |
 |------|---------|---------|
-| Wezterm | Opens automatically | GPU-rendered terminal emulator |
+| WezTerm | Opens automatically | GPU-rendered terminal emulator |
 | tmux | `tmux` / `tmux a` | Session multiplexer with persistence |
 | tmuxinator | `mux start <project>` | One-command dev environment |
 | Neovim | `nvim` / `vim` / `vi` | IDE-grade terminal editor |
 | lazygit | `lg` | Terminal git UI |
-| delta | automatic via `git diff` | Syntax-highlighted diffs |
-| fd | automatic via `Ctrl-T` | Fast file finding |
-| fzf | `Ctrl-T` / `Ctrl-R` | Fuzzy finder |
+| delta | automatic via `git diff` | Syntax-highlighted side-by-side diffs |
+| fd | automatic via `Ctrl-T` | Fast file finding (powers fzf) |
+| fzf | `Ctrl-T` / `Ctrl-R` | Fuzzy finder for files and history |
 | bat | `cat <file>` (aliased) | Syntax-highlighted file viewer |
 | eza | `ls` (aliased) | Modern ls with icons |
 | zoxide | `cd` (aliased) | Smart directory jumping |
 
 ---
 
-## tmux
+## tmux — Prefix: `Ctrl+a`
 
-**Prefix key: `Ctrl+a`** (press, release, then press the command key)
+Press `Ctrl+a`, release, then press the command key.
 
-### Pane Management
+### Panes
 
 | Action | Keys |
 |--------|------|
 | Split horizontal | `Ctrl-a -` |
 | Split vertical | `Ctrl-a \|` |
 | Navigate panes | `Ctrl-a h/j/k/l` |
-| Resize panes | `Ctrl-a H/J/K/L` (repeatable) |
-| Zoom pane (fullscreen) | `Ctrl-a z` |
+| Resize panes | `Ctrl-a H/J/K/L` (hold for repeat) |
+| Zoom pane | `Ctrl-a z` |
 | Close pane | `Ctrl-a x` |
 
-### Window Management
+### Windows
 
 | Action | Keys |
 |--------|------|
@@ -69,9 +64,9 @@ tmux a
 | Next/prev window | `Shift-Right / Shift-Left` |
 | Jump to window N | `Ctrl-a 1-9` |
 | Rename window | `Ctrl-a ,` |
-| List windows | `Ctrl-a w` |
+| List all windows | `Ctrl-a w` |
 
-### Session Management
+### Sessions
 
 | Action | Keys / Command |
 |--------|---------------|
@@ -79,6 +74,7 @@ tmux a
 | Reattach | `tmux a` |
 | List sessions | `tmux ls` |
 | New named session | `tmux new -s name` |
+| Kill session | `tmux kill-session -t name` |
 
 ### Copy Mode (Vim-style)
 
@@ -88,58 +84,72 @@ tmux a
 | Navigate | `h/j/k/l`, `w/b`, `Ctrl-u/d` |
 | Start selection | `v` |
 | Copy to clipboard | `y` |
-| Search forward | `/` |
-| Exit copy mode | `q` or `Esc` |
+| Search | `/` (forward), `?` (backward) |
+| Exit | `q` or `Esc` |
 
-### Plugins
+### tmux Plugins
 
-| Plugin | What it does |
-|--------|-------------|
-| tmux-sensible | Community sane defaults |
-| tmux-resurrect | Save/restore sessions across reboots (`Ctrl-a Ctrl-s` save, `Ctrl-a Ctrl-r` restore) |
-| tmux-continuum | Auto-save every 15 minutes |
-| tmux-yank | Copy to system clipboard (macOS + Linux) |
-| tokyo-night-tmux | Status bar theme |
+| Plugin | Purpose | Key |
+|--------|---------|-----|
+| tmux-resurrect | Save/restore sessions | `Ctrl-a Ctrl-s` save, `Ctrl-a Ctrl-r` restore |
+| tmux-continuum | Auto-save every 15 min | automatic |
+| tmux-yank | System clipboard copy | automatic (macOS + Linux) |
+| tokyo-night-tmux | Status bar theme | automatic |
+| Install plugins | After adding to config | `Ctrl-a I` (capital I) |
 
 ---
 
-## Neovim (LazyVim)
+## Neovim (LazyVim) — Leader: `Space`
 
-**Leader key: `Space`** — press and wait for which-key popup
+Press `Space` and wait for the which-key popup showing all available bindings.
 
 ### File Navigation
 
-| Action | Keys | VS Code |
-|--------|------|---------|
+| Action | Keys | VS Code Equivalent |
+|--------|------|-------------------|
 | Find file | `Space f f` | `Cmd-P` |
 | Grep project | `Space s g` | `Cmd-Shift-F` |
 | File explorer | `Space e` | Sidebar |
 | Recent files | `Space f r` | Recent |
 | Find buffers | `Space f b` | Open editors |
+| Search keymaps | `Space s k` | Keyboard shortcuts |
+| Command palette | `Space Space` | `Cmd-Shift-P` |
 
 ### Code Navigation (LSP)
 
-| Action | Keys | VS Code |
-|--------|------|---------|
-| Go to definition | `g d` | `F12` |
-| Find references | `g r` | `Shift-F12` |
-| Go to implementation | `g I` | |
-| Hover docs | `K` | Hover |
-| Code actions | `Space c a` | `Cmd-.` |
-| Rename symbol | `Space c r` | `F2` |
-| Format | `Space c f` | `Shift-Alt-F` |
-| Next diagnostic | `] d` | |
-| Prev diagnostic | `[ d` | |
+| Action | Keys |
+|--------|------|
+| Go to definition | `g d` |
+| Find references | `g r` |
+| Go to implementation | `g I` |
+| Hover docs | `K` |
+| Code actions | `Space c a` |
+| Rename symbol | `Space c r` |
+| Format | `Space c f` |
+| Next/prev diagnostic | `] d` / `[ d` |
 
-### Window & Buffer
+### Windows and Buffers
 
 | Action | Keys |
 |--------|------|
 | Navigate splits | `Ctrl-h/j/k/l` |
 | Next/prev buffer | `Shift-l / Shift-h` |
 | Close buffer | `Space b d` |
+| Split vertical | `Space s v` (custom) |
+| Split horizontal | `Space s h` (custom) |
 | Save | `Space w` |
 | Quit | `Space q` |
+| Resize splits | `Ctrl-Up/Down/Left/Right` |
+
+### Editing
+
+| Action | Keys |
+|--------|------|
+| Scroll down (centered) | `Ctrl-d` |
+| Scroll up (centered) | `Ctrl-u` |
+| Toggle comment | `gcc` (line) / `gc` (visual) |
+| Indent/dedent (visual) | `>` / `<` (stays in visual mode) |
+| Surround word | `ysiw)` (wrap with parens) |
 
 ### Git
 
@@ -147,35 +157,32 @@ tmux a
 |--------|------|
 | Open lazygit | `Space g g` |
 | Blame line | `Space g b` |
+| Blame file | `Space g B` |
 | Next/prev hunk | `] h / [ h` |
 | Git commits | `Space g c` |
+| Git status | `Space g s` |
 
 ### Rails Shortcuts
 
 | Action | Keys |
 |--------|------|
-| Open routes | `Space r c` |
+| Open routes.rb | `Space r c` |
 | Open Gemfile | `Space r g` |
-| Open schema | `Space r s` |
+| Open schema.rb | `Space r s` |
 
-### Language Support
+### Language Support (LSP via Mason)
 
-LSP servers auto-install via Mason for:
-- Ruby (Solargraph/Ruby LSP)
-- TypeScript/JavaScript (ts_ls)
-- Python (pyright)
-- Rust (rust-analyzer)
-- GraphQL
-- JSON, YAML, Docker
-- ESLint, Prettier
+Ruby, TypeScript/JavaScript, Python, Rust, GraphQL, JSON, YAML, Docker, Shell, ESLint, Prettier
 
-### Tips
+### Useful Toggles
 
-1. **Which-key**: Press `Space` and wait — shows all available keybindings
-2. **Search keymaps**: `Space s k`
-3. **Command palette**: `Space Space`
-4. **Lazy plugin manager**: `Space l`
-5. **Toggle features**: `Space u` prefix (format, spelling, line numbers, etc.)
+| Action | Keys |
+|--------|------|
+| Toggle auto-format | `Space u f` |
+| Toggle spelling | `Space u s` |
+| Toggle word wrap | `Space u w` |
+| Toggle line numbers | `Space u l` |
+| Open Lazy manager | `Space l` |
 
 ---
 
@@ -188,6 +195,7 @@ LSP servers auto-install via Mason for:
 | Fuzzy find files | `Ctrl-T` |
 | Fuzzy search history | `Ctrl-R` |
 | Smart cd | `cd <partial>` (zoxide) |
+| Accept suggestion | `→` (right arrow) |
 
 ### Aliases
 
@@ -200,7 +208,15 @@ LSP servers auto-install via Mason for:
 | `cat` | `bat --paging=never` |
 | `gs` | `git status` |
 | `gd` | `git diff` |
+| `gco` | `git checkout` |
+| `gcb` | `git checkout -b` |
+| `gp` | `git push` |
+| `gpl` | `git pull` |
 | `glog` | `git log --oneline --graph --decorate --all` |
+| `be` | `bundle exec` |
+| `ber` | `bundle exec rspec` |
+| `rc` | `rails console` |
+| `rs` | `rails server` |
 
 See `~/.aliases` for the full list.
 
@@ -210,23 +226,24 @@ See `~/.aliases` for the full list.
 
 ```
 Morning:
-  $ mux start thinkific     <- one command, full dev environment
-  $ tmux                     <- or just a plain tmux session
+  $ mux start thinkific      ← one command, full dev environment
+  $ tmux                      ← or plain tmux session
 
 During the day:
-  Ctrl-a 1                   <- jump to editor window
-  Ctrl-a 2                   <- check service logs
-  Ctrl-a 5                   <- free terminal
-  Space f f                  <- find file in nvim
-  Space s g                  <- grep project in nvim
-  Space g g                  <- open lazygit
-  lg                         <- or lazygit from any shell
-  Ctrl-a d                   <- detach (session persists)
-  tmux a                     <- reattach from anywhere
+  Ctrl-a 1                    ← jump to editor window
+  Ctrl-a 2                    ← check service logs
+  Ctrl-a 5                    ← free terminal
+  Space f f                   ← find file in nvim
+  Space s g                   ← grep project in nvim
+  Space g g                   ← open lazygit in nvim
+  lg                          ← lazygit from any shell
+  git diff                    ← auto-uses delta for pretty diffs
+  Ctrl-a d                    ← detach (session persists!)
+  tmux a                      ← reattach from anywhere
 
 End of day:
-  Close terminal             <- tmux sessions persist
-  Next morning: tmux a       <- everything still there
+  Close terminal              ← tmux sessions survive
+  Next morning: tmux a        ← everything still there
 ```
 
 ---
@@ -234,19 +251,36 @@ End of day:
 ## Installation
 
 ### macOS
+
 ```bash
-chezmoi init --apply <repo-url>
+chezmoi init --apply ishtiaque05/dotfiles
 # Homebrew installs all tools via Brewfile
-# Then open tmux and press Ctrl-a I to install tmux plugins
-# Then open nvim to bootstrap LazyVim plugins
+# Then: tmux → Ctrl-a I (install tmux plugins)
+# Then: nvim (LazyVim auto-bootstraps on first open)
 ```
 
 ### Linux (Ubuntu/Debian)
+
 ```bash
-chezmoi init --apply <repo-url>
+chezmoi init --apply ishtiaque05/dotfiles
 # apt + custom installers handle all tools
-# Then open tmux and press Ctrl-a I to install tmux plugins
-# Then open nvim to bootstrap LazyVim plugins
+# Then: tmux → Ctrl-a I (install tmux plugins)
+# Then: nvim (LazyVim auto-bootstraps on first open)
+```
+
+---
+
+## Backup and Rollback
+
+Every `chezmoi apply` automatically backs up configs to `~/.dotfiles-backup/` (keeps last 5).
+
+```bash
+# List backups
+ls ~/.dotfiles-backup/
+
+# Restore from a backup
+cp ~/.dotfiles-backup/2026-03-12_143000/.zshrc ~/
+cp -r ~/.dotfiles-backup/2026-03-12_143000/nvim ~/.config/
 ```
 
 ---
@@ -255,12 +289,13 @@ chezmoi init --apply <repo-url>
 
 | Problem | Fix |
 |---------|-----|
-| Colors look wrong in tmux | Ensure `$TERM` is `xterm-256color` outside tmux |
+| Colors wrong in tmux | Ensure `$TERM` is `xterm-256color` in WezTerm |
 | Neovim plugins broken | `rm -rf ~/.local/share/nvim/lazy ~/.cache/nvim` then reopen nvim |
-| tmux plugins not loading | Run `Ctrl-a I` to install, or re-clone TPM: `git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm` |
-| Copy not working in tmux | Ensure `tmux-yank` plugin is installed (`Ctrl-a I`) |
-| fzf slow | Install `fd` — it replaces the default `find` backend |
-| Neovim LSP not working | Open nvim, run `:Mason` to check/install language servers |
+| tmux plugins not loading | `Ctrl-a I` to install, or re-clone TPM |
+| Copy not working in tmux | `Ctrl-a I` to install tmux-yank |
+| fzf slow | Install `fd` — replaces the default `find` backend |
+| LSP not working | `:Mason` in nvim to check/install language servers |
+| tmux split not working | Two-step: press `Ctrl-a`, release, THEN press `-` or `\|` |
 
 ---
 
@@ -268,10 +303,11 @@ chezmoi init --apply <repo-url>
 
 | Config | Path |
 |--------|------|
-| tmux | `~/.config/tmux/tmux.conf` (or `~/.tmux.conf`) |
+| tmux | `~/.config/tmux/tmux.conf` |
 | Neovim | `~/.config/nvim/` |
-| Wezterm | `~/.config/wezterm/wezterm.lua` (or `~/.wezterm.lua`) |
+| WezTerm | `~/.config/wezterm/wezterm.lua` |
 | Zsh | `~/.zshrc` |
 | Aliases | `~/.aliases` |
-| tmuxinator projects | `~/.config/tmuxinator/*.yml` |
+| tmuxinator | `~/.config/tmuxinator/*.yml` |
 | Git delta | `~/.gitconfig` (pager section) |
+| Backups | `~/.dotfiles-backup/` |
