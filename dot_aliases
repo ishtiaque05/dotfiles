@@ -51,3 +51,17 @@ alias bers="bundle exec rails server"
 
 alias ls="eza --icons=always"
 alias cat="bat --paging=never"
+
+# =========================
+# Neovim & Productivity Tools
+# =========================
+
+# Neovim as default editor
+alias vim="nvim"
+alias vi="nvim"
+
+# Lazygit
+alias lg="lazygit"
+
+# Tmuxinator
+alias mux="tmuxinator"

@@ -159,13 +159,14 @@ Leader key: `<Space>`
 ## Language Support
 
 LazyVim includes LSP support for:
-- ✅ Ruby (solargraph)
+- ✅ Ruby (solargraph / Ruby LSP)
 - ✅ Rust (rust-analyzer)
-- ✅ TypeScript/JavaScript (tsserver)
+- ✅ TypeScript/JavaScript (ts_ls)
 - ✅ Python (pyright)
+- ✅ GraphQL (graphql-language-service)
 - ✅ Shell scripts (bash-language-server)
 - ✅ React/JSX
-- ✅ JSON, YAML, TOML, Markdown
+- ✅ JSON, YAML, Docker, TOML, Markdown
 
 Formatters:
 - Prettier (JS/TS/JSON/CSS/HTML)

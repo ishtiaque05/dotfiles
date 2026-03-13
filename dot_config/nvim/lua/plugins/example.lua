@@ -1,25 +1,35 @@
--- Add your custom plugins here
+-- Custom plugins
 -- This file is automatically loaded by lazy.nvim
 
 return {
-  -- Example: Add a colorscheme
-  -- {
-  --   "folke/tokyonight.nvim",
-  --   opts = {
-  --     style = "night",
-  --   },
-  -- },
+  -- Colorscheme: tokyonight-night (matches Wezterm + tmux theme)
+  {
+    "folke/tokyonight.nvim",
+    opts = {
+      style = "night",
+      transparent = false,
+    },
+  },
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "tokyonight-night",
+    },
+  },
 
-  -- Example: Customize neo-tree
-  -- {
-  --   "nvim-neo-tree/neo-tree.nvim",
-  --   opts = {
-  --     filesystem = {
-  --       filtered_items = {
-  --         visible = true,
-  --         hide_dotfiles = false,
-  --       },
-  --     },
-  --   },
-  -- },
+  -- GraphQL syntax highlighting + LSP
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = {
+      ensure_installed = { "graphql" },
+    },
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        graphql = {},
+      },
+    },
+  },
 }

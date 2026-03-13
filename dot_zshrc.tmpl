@@ -89,6 +89,12 @@ source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 [[ -f ~/.aliases ]] && source ~/.aliases
 
 # =========================
+# Editor
+# =========================
+
+export EDITOR="nvim"
+
+# =========================
 # Fuzzy Finder (FZF)
 # =========================
 
@@ -102,6 +108,12 @@ cyan="#2CF9ED"
 
 export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 export PATH="$HOME/.local/bin:$PATH"
+
+# Use fd as fzf backend (faster than default find)
+if command -v fd &> /dev/null; then
+  export FZF_DEFAULT_COMMAND="fd --type f --hidden --exclude .git"
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+fi
 
 # FZF keybindings and preview settings
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# =========================
+# Git Delta Configuration
+# =========================
+# Configures git-delta as the pager for git diff/log
+# Runs once on first chezmoi apply
+
+if ! command -v delta &> /dev/null; then
+  echo "[INFO]: delta not found, skipping git-delta configuration"
+  exit 0
+fi
+
+echo "[INFO]: Configuring git-delta as git pager..."
+
+git config --global core.pager delta
+git config --global interactive.diffFilter "delta --color-only"
+git config --global delta.navigate true
+git config --global delta.side-by-side true
+git config --global delta.line-numbers true
+git config --global delta.syntax-theme tokyonight_night
+git config --global merge.conflictstyle diff3
+git config --global diff.colorMoved default
+
+echo "[INFO]: git-delta configured as default pager"

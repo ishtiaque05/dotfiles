@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# =========================
+# TPM (Tmux Plugin Manager) Installation
+# =========================
+# Runs once on first chezmoi apply
+
+if [ -d "$HOME/.tmux/plugins/tpm" ]; then
+  echo "[INFO]: TPM already installed"
+  exit 0
+fi
+
+echo "[INFO]: Installing TPM (Tmux Plugin Manager)..."
+git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+echo "[INFO]: TPM installed. Open tmux and press Ctrl-a I to install plugins."

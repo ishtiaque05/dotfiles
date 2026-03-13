@@ -27,6 +27,7 @@ opt.cursorline = true
 opt.termguicolors = true
 opt.background = "dark"
 opt.signcolumn = "yes"
+opt.scrolloff = 8          -- Keep 8 lines visible above/below cursor
 
 -- Backspace
 opt.backspace = "indent,eol,start"

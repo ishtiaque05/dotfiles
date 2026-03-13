@@ -3,7 +3,7 @@ local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 
 config.font = wezterm.font("MesloLGS NF")
-config.font_size = 12
+config.font_size = 13
 
 config.window_decorations = "TITLE | RESIZE"
 config.colors = {
@@ -19,5 +19,12 @@ config.colors = {
 }
 
 config.macos_window_background_blur = 10
+
+-- Safe TERM value: works in containers and SSH
+-- True color is handled by tmux's terminal-overrides
+config.term = "xterm-256color"
+
+-- Don't prompt when closing (tmux manages sessions)
+config.window_close_confirmation = "NeverPrompt"
 
 return config

@@ -224,6 +224,37 @@ install_fzf() {
 }
 
 # =========================
+# fd (modern find)
+# =========================
+
+install_fd() {
+  print_message "Checking fd..."
+
+  if command -v fd &> /dev/null || command -v fdfind &> /dev/null; then
+    print_success "fd already installed"
+    return 0
+  fi
+
+  print_message "Installing fd..."
+  {
+    sudo apt update -y &&
+    sudo apt install -y fd-find &&
+
+    # Create symlink (Ubuntu/Debian installs as fdfind)
+    if [ ! -L "$HOME/.local/bin/fd" ]; then
+      mkdir -p "$HOME/.local/bin" &&
+      ln -sf /usr/bin/fdfind "$HOME/.local/bin/fd" &&
+      print_success "fd installed (symlink created)"
+    else
+      print_success "fd installed"
+    fi
+  } || {
+    print_error "fd installation failed"
+    return 1
+  }
+}
+
+# =========================
 # Zoxide (smart cd)
 # =========================
 
@@ -261,7 +292,61 @@ install_wezterm
 install_eza
 install_bat
 install_fzf
+install_fd
 install_zoxide
+install_lazygit
+install_delta
+
+# =========================
+# Lazygit (terminal git UI)
+# =========================
+
+install_lazygit() {
+  print_message "Checking lazygit..."
+
+  if command -v lazygit &> /dev/null; then
+    print_success "lazygit already installed"
+    return 0
+  fi
+
+  print_message "Installing lazygit..."
+  {
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_arm64.tar.gz" &&
+    cd /tmp && tar xf lazygit.tar.gz lazygit &&
+    sudo install lazygit /usr/local/bin &&
+    rm -f /tmp/lazygit /tmp/lazygit.tar.gz &&
+    print_success "lazygit installed"
+  } || {
+    print_error "lazygit installation failed"
+    return 1
+  }
+}
+
+# =========================
+# Git-delta (syntax-highlighted diffs)
+# =========================
+
+install_delta() {
+  print_message "Checking delta..."
+
+  if command -v delta &> /dev/null; then
+    print_success "delta already installed"
+    return 0
+  fi
+
+  print_message "Installing delta..."
+  {
+    DELTA_VERSION=$(curl -s "https://api.github.com/repos/dandavison/delta/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+    curl -Lo /tmp/delta.deb "https://github.com/dandavison/delta/releases/latest/download/git-delta_${DELTA_VERSION}_arm64.deb" &&
+    sudo dpkg -i /tmp/delta.deb &&
+    rm -f /tmp/delta.deb &&
+    print_success "delta installed"
+  } || {
+    print_error "delta installation failed"
+    return 1
+  }
+}
 
 set -e  # Re-enable exit on error
 

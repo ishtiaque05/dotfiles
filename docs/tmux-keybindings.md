@@ -127,6 +127,18 @@ Ctrl+a ]         # Paste (default tmux)
 4. **Detach session**: `Ctrl+a d` - session keeps running in background
 5. **Help**: `Ctrl+a ?` shows all keybindings
 
+## Plugins
+
+| Plugin | Purpose | Key |
+|--------|---------|-----|
+| tmux-sensible | Community sane defaults | auto |
+| tmux-resurrect | Save/restore sessions | `Ctrl+a Ctrl-s` save, `Ctrl+a Ctrl-r` restore |
+| tmux-continuum | Auto-save every 15 min | auto |
+| tmux-yank | System clipboard copy | auto (works on macOS + Linux) |
+| tokyo-night-tmux | Status bar theme | auto |
+
+Install plugins: `Ctrl+a I` (capital I)
+
 ## Tmux + Neovim Integration
 
 Works seamlessly with Neovim:
@@ -134,6 +146,15 @@ Works seamlessly with Neovim:
 - Terminal colors work correctly (256 colors + true color)
 - Fast escape time (10ms) for better Neovim responsiveness
 - Focus events enabled for Neovim autoread
+
+## Tmuxinator
+
+| Command | Action |
+|---------|--------|
+| `mux start <project>` | Launch project environment |
+| `mux stop <project>` | Kill project session |
+| `mux list` | List available projects |
+| `mux edit <project>` | Edit project config |
 
 ## External Resources
 
