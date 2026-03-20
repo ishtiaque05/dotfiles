@@ -15,7 +15,13 @@ function M.eza_tree_split()
         direction = "Right",
         size = { Percent = 30 },
         command = {
-          args = { "eza", "--tree", "--level=3", "--icons=always", "--git-ignore", dir },
+          args = {
+            os.getenv("SHELL") or "bash",
+            "-c",
+            "eza --tree --level=3 --icons=always --git-ignore "
+              .. dir
+              .. '; echo ""; read -r -p "[press Enter to close]"',
+          },
         },
       }),
       pane

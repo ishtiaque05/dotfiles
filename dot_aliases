@@ -105,6 +105,27 @@ preview() {
         cat "$1"
       fi
       ;;
+    text/plain)
+      # macOS file --mime-type returns text/plain for .md files, so check extension
+      case "$1" in
+        *.md|*.markdown)
+          if command -v glow &>/dev/null; then
+            glow "$1"
+          elif command -v bat &>/dev/null; then
+            bat "$1"
+          else
+            cat "$1"
+          fi
+          ;;
+        *)
+          if command -v bat &>/dev/null; then
+            bat "$1"
+          else
+            cat "$1"
+          fi
+          ;;
+      esac
+      ;;
     *)
       if command -v bat &>/dev/null; then
         bat "$1"
