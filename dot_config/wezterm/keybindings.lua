@@ -1,6 +1,7 @@
 -- dot_config/wezterm/keybindings.lua
 local wezterm = require("wezterm")
 local act = wezterm.action
+local helpers = require("helpers")
 
 local M = {}
 
@@ -113,6 +114,9 @@ function M.apply(config)
     { key = "c", mods = "LEADER", action = act.ActivateCopyMode },
     -- Quick select: Leader + Space
     { key = " ", mods = "LEADER", action = act.QuickSelect },
+
+    -- Explore: Leader + e (eza tree in split)
+    { key = "e", mods = "LEADER", action = helpers.eza_tree_split() },
 
     -- === No-Leader Shortcuts ===
 
