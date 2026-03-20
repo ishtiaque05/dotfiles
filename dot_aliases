@@ -51,3 +51,87 @@ alias bers="bundle exec rails server"
 
 alias ls="eza --icons=always"
 alias cat="bat --paging=never"
+
+# =========================
+# Content Preview
+# =========================
+
+preview() {
+  if [ -z "$1" ]; then
+    echo "Usage: preview <file>"
+    return 1
+  fi
+
+  if [ ! -e "$1" ]; then
+    echo "File not found: $1"
+    return 1
+  fi
+
+  local mime
+  mime=$(file --mime-type -b "$1")
+
+  case "$mime" in
+    image/*)
+      if command -v wezterm &>/dev/null; then
+        wezterm imgcat "$1"
+      else
+        echo "[preview] Install wezterm for image preview"
+      fi
+      ;;
+    application/pdf)
+      if command -v pdftotext &>/dev/null && command -v bat &>/dev/null; then
+        pdftotext "$1" - | bat --language=md --paging=never
+      elif command -v pdftotext &>/dev/null; then
+        pdftotext "$1" -
+      else
+        echo "[preview] Install poppler for PDF preview: brew install poppler"
+      fi
+      ;;
+    text/markdown)
+      if command -v glow &>/dev/null; then
+        glow "$1"
+      elif command -v bat &>/dev/null; then
+        bat "$1"
+      else
+        cat "$1"
+      fi
+      ;;
+    text/html)
+      if command -v w3m &>/dev/null; then
+        w3m "$1"
+      elif command -v bat &>/dev/null; then
+        bat "$1"
+      else
+        cat "$1"
+      fi
+      ;;
+    text/plain)
+      # macOS file --mime-type returns text/plain for .md files, so check extension
+      case "$1" in
+        *.md|*.markdown)
+          if command -v glow &>/dev/null; then
+            glow "$1"
+          elif command -v bat &>/dev/null; then
+            bat "$1"
+          else
+            cat "$1"
+          fi
+          ;;
+        *)
+          if command -v bat &>/dev/null; then
+            bat "$1"
+          else
+            cat "$1"
+          fi
+          ;;
+      esac
+      ;;
+    *)
+      if command -v bat &>/dev/null; then
+        bat "$1"
+      else
+        cat "$1"
+      fi
+      ;;
+  esac
+}
