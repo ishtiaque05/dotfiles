@@ -120,19 +120,19 @@ function M.setup(wezterm_mod)
       -- Ruby version
       local ruby_version = read_file(cwd .. "/.ruby-version")
       if ruby_version then
-        table.insert(segments, segment("", ruby_version, colors.red))
+        table.insert(segments, segment(wezterm.nerdfonts.dev_ruby, ruby_version, colors.red))
       end
 
       -- Node version
       local node_version = read_file(cwd .. "/.node-version") or read_file(cwd .. "/.nvmrc")
       if node_version then
-        table.insert(segments, segment("", node_version, colors.green))
+        table.insert(segments, segment(wezterm.nerdfonts.dev_nodejs_small, node_version, colors.green))
       end
 
       -- Python version
       local python_version = read_file(cwd .. "/.python-version")
       if python_version then
-        table.insert(segments, segment("", python_version, colors.yellow))
+        table.insert(segments, segment(wezterm.nerdfonts.dev_python, python_version, colors.yellow))
       end
 
       -- Terraform
@@ -152,12 +152,12 @@ function M.setup(wezterm_mod)
     local battery = get_battery()
     if battery then
       local battery_color = battery < 20 and colors.red or colors.green
-      local battery_icon = battery < 20 and "" or ""
+      local battery_icon = battery < 20 and wezterm.nerdfonts.fa_battery_quarter or wezterm.nerdfonts.fa_battery_full
       table.insert(segments, segment(battery_icon, battery .. "%", battery_color))
     end
 
     -- Time
-    table.insert(segments, segment("", os.date("%H:%M"), colors.blue))
+    table.insert(segments, segment(wezterm.nerdfonts.fa_clock_o, os.date("%H:%M"), colors.blue))
 
     -- Join segments with separators
     local status_parts = {}
