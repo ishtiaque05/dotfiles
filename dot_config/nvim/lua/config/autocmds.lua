@@ -49,11 +49,17 @@ autocmd("VimEnter", {
       vim.ui.select({ "Start devcontainer", "Exec into running devcontainer", "Ignore" }, {
         prompt = "Devcontainer found. What would you like to do?",
       }, function(choice)
-        if choice == "Start devcontainer" then
-          vim.cmd("terminal devcontainer up --workspace-folder " .. vim.fn.shellescape(cwd))
-        elseif choice == "Exec into running devcontainer" then
-          vim.cmd("terminal devcontainer exec --workspace-folder " .. vim.fn.shellescape(cwd) .. " nvim .")
-        end
+        if not choice or choice == "Ignore" then return end
+        vim.schedule(function()
+          vim.cmd("enew")
+          vim.bo.modified = false
+          if choice == "Start devcontainer" then
+            vim.fn.termopen("echo '=> Starting devcontainer...' && devcontainer up --workspace-folder " .. vim.fn.shellescape(cwd))
+          elseif choice == "Exec into running devcontainer" then
+            vim.fn.termopen("echo '=> Connecting to devcontainer...' && devcontainer exec --workspace-folder " .. vim.fn.shellescape(cwd) .. " nvim .")
+          end
+          vim.cmd("startinsert")
+        end)
       end)
     end, 500)
   end,
