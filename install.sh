@@ -264,6 +264,16 @@ install_tldr() {
 }
 
 
+install_devcontainer_cli() {
+  if ! command -v devcontainer &> /dev/null; then
+    print_message "Installing devcontainer CLI..."
+    npm install -g @devcontainers/cli
+    print_message "devcontainer CLI has been installed."
+  else
+    print_message "devcontainer CLI is already installed."
+  fi
+}
+
 install_git_and_curl
 install_zsh
 setup_nerd_font
@@ -277,6 +287,7 @@ install_bat_tokyo_night_theme
 install_tldr
 install_fzf
 install_zoxide
+install_devcontainer_cli
 
 print_message "Make sure NERD FONT is selected is download correctly and selected in wezterm.lua"
 # Prompt for manual Powerlevel10k configuration
