@@ -148,3 +148,6 @@ bindkey -e
 
 # Modern directory colors
 eval "$(dircolors -b)"
+
+# asdf version manager
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"

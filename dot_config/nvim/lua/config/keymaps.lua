@@ -37,6 +37,11 @@ keymap.set("v", ">", ">gv", opts)
 keymap.set("n", "<C-d>", "<C-d>zz", opts)
 keymap.set("n", "<C-u>", "<C-u>zz", opts)
 
+-- Claude Code: open in a vertical split terminal
+keymap.set("n", "<leader>cc", function()
+  vim.cmd("vsplit | terminal claude")
+end, { desc = "Open Claude Code" })
+
 -- Rails specific keymaps
 keymap.set("n", "<leader>rc", ":e config/routes.rb<CR>", { desc = "Open routes" })
 keymap.set("n", "<leader>rg", ":e Gemfile<CR>", { desc = "Open Gemfile" })
