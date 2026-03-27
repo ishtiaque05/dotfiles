@@ -156,3 +156,6 @@ if [[ -f "/opt/homebrew/bin/brew" ]]; then
 elif [[ -f "/usr/local/bin/brew" ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
+
+# asdf version manager
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
