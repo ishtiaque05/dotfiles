@@ -263,6 +263,37 @@ install_tldr() {
   fi
 }
 
+install_asdf() {
+  if ! command -v asdf &> /dev/null; then
+    print_message "Installing asdf version manager..."
+    brew install asdf
+    print_message "asdf has been installed."
+  else
+    print_message "asdf is already installed."
+  fi
+
+  # Add asdf shims to PATH in .zshrc if not already present
+  if ! grep -q 'ASDF_DATA_DIR' ~/.zshrc; then
+    echo 'export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"' >> ~/.zshrc
+    print_message "asdf PATH added to ~/.zshrc."
+  fi
+
+  # Install Node.js plugin and latest LTS
+  if ! asdf plugin list 2>/dev/null | grep -q nodejs; then
+    asdf plugin add nodejs
+    print_message "asdf nodejs plugin added."
+  fi
+
+  if ! asdf list nodejs 2>/dev/null | grep -q .; then
+    print_message "Installing Node.js via asdf..."
+    asdf install nodejs latest
+    asdf set --home nodejs latest
+    print_message "Node.js installed via asdf."
+  else
+    print_message "Node.js already installed via asdf."
+  fi
+}
+
 install_devcontainer_cli() {
   if ! command -v devcontainer &> /dev/null; then
     print_message "Installing devcontainer CLI..."
@@ -299,6 +330,7 @@ install_bat_tokyo_night_theme
 install_tldr
 install_fzf
 install_zoxide
+install_asdf
 install_devcontainer_cli
 
 print_message "Installation and configuration complete! Please restart your terminal if Zsh is not already active."
