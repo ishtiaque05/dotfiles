@@ -24,3 +24,37 @@ autocmd("BufEnter", {
 --     vim.lsp.buf.format()
 --   end,
 -- })
+
+-- Detect devcontainer and prompt to start it
+autocmd("VimEnter", {
+  callback = function()
+    local cwd = vim.fn.getcwd()
+    local devcontainer_json = cwd .. "/.devcontainer/devcontainer.json"
+    local devcontainer_root = cwd .. "/.devcontainer.json"
+
+    local config_path = nil
+    if vim.fn.filereadable(devcontainer_json) == 1 then
+      config_path = devcontainer_json
+    elseif vim.fn.filereadable(devcontainer_root) == 1 then
+      config_path = devcontainer_root
+    end
+
+    if not config_path then
+      return
+    end
+
+    vim.notify(" Devcontainer detected", vim.log.levels.INFO)
+
+    vim.defer_fn(function()
+      vim.ui.select({ "Start devcontainer", "Exec into running devcontainer", "Ignore" }, {
+        prompt = "Devcontainer found. What would you like to do?",
+      }, function(choice)
+        if choice == "Start devcontainer" then
+          vim.cmd("terminal devcontainer up --workspace-folder " .. vim.fn.shellescape(cwd))
+        elseif choice == "Exec into running devcontainer" then
+          vim.cmd("terminal devcontainer exec --workspace-folder " .. vim.fn.shellescape(cwd) .. " nvim .")
+        end
+      end)
+    end, 500)
+  end,
+})
