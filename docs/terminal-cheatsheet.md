@@ -146,6 +146,31 @@ Almost identical to WezTerm — same muscle memory, different leader.
 
 ## Neovim — Daily Essentials
 
+**Leader key: `Space`** — press Space then the action key.
+Neovim uses `fzf-lua` for fuzzy finding (via LazyVim).
+
+### Fuzzy Finding — "Where is that file?"
+
+| Keys              | Action                  | Remember                       |
+|-------------------|-------------------------|--------------------------------|
+| `Space Space`     | Find files              | Double-tap = "find anything"   |
+| `Space /`         | Grep project            | `/` = search (same as vim)     |
+| `Space fg`        | Live grep               | **f**ind by **g**rep           |
+| `Space fb`        | Find buffers            | **f**ind **b**uffers           |
+| `Space fr`        | Recent files            | **f**ind **r**ecent            |
+| `Space fc`        | Find in config          | **f**ind **c**onfig            |
+| `Space fR`        | Resume last search      | **f**ind **R**esume            |
+
+**Inside fzf popup:**
+
+| Keys              | Action                  | Remember                       |
+|-------------------|-------------------------|--------------------------------|
+| `Ctrl+j` / `Ctrl+k` | Navigate results     | Same vim up/down               |
+| `Enter`           | Open file               | Confirm                        |
+| `Ctrl+v`          | Open in vertical split  | **v**ertical                   |
+| `Ctrl+x`          | Open in horizontal split| Like vim's `<C-w>s`           |
+| `Esc`             | Close                   | Cancel                         |
+
 ### Movement — "The Vim Language"
 
 ```
@@ -296,12 +321,13 @@ Practice these 10 times each session until automatic:
 ## Quick Reference Card
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  WezTerm: Cmd+.    Tmux: Ctrl+a    Neovim: direct      │
-├─────────────────────────────────────────────────────────┤
-│  SPLIT    |  -       MOVE    h j k l    RESIZE  H J K L │
-│  TAB      t n p 1-9  ZOOM    z          CLOSE   x       │
-│  SESSION  s S ( )    FIND    f          COPY    c       │
-│  RELOAD   r          EXPLORE e          SWAP    d       │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  WezTerm: Cmd+.    Tmux: Ctrl+a    Neovim: Space (leader)│
+├──────────────────────────────────────────────────────────┤
+│  SPLIT    |  -       MOVE    h j k l    RESIZE  H J K L  │
+│  TAB      t n p 1-9  ZOOM    z          CLOSE   x        │
+│  SESSION  s S ( )    FIND    f          COPY    c        │
+│  RELOAD   r          EXPLORE e          SWAP    d        │
+│  Neovim:  Space Space = find files   Space / = grep      │
+└──────────────────────────────────────────────────────────┘
 ```
