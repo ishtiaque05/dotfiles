@@ -17,7 +17,11 @@ eval "$(echo "$input" | jq -r '
   "ctx_size=" + (.context_window.context_window_size // 200000 | tostring) + "\n" +
   "ctx_pct=" + (.context_window.used_percentage // 0 | tostring) + "\n" +
   "tok_in=" + (.context_window.total_input_tokens // 0 | tostring) + "\n" +
-  "tok_out=" + (.context_window.total_output_tokens // 0 | tostring)
+  "tok_out=" + (.context_window.total_output_tokens // 0 | tostring) + "\n" +
+  "vim_mode=" + (.vim.mode // "" | @sh) + "\n" +
+  "wt_name=" + (.worktree.name // "" | @sh) + "\n" +
+  "wt_branch=" + (.worktree.branch // "" | @sh) + "\n" +
+  "wt_orig_branch=" + (.worktree.original_branch // "" | @sh)
 ' 2>/dev/null)"
 
 ctx_pct=${ctx_pct:-0}
@@ -41,6 +45,11 @@ C_OK='\033[38;2;74;222;128m'         # Green — healthy
 C_WARN='\033[38;2;251;191;36m'       # Amber — caution
 C_CRIT='\033[38;2;251;113;133m'      # Rose — danger
 C_BAR_EMPTY='\033[38;2;55;65;81m'    # Dim — empty bar segments
+C_VIM_N='\033[38;2;129;140;248m'     # Indigo — vim NORMAL
+C_VIM_I='\033[38;2;52;211;153m'      # Emerald — vim INSERT
+C_VIM_V='\033[38;2;251;146;60m'      # Orange — vim VISUAL
+C_WT='\033[38;2;217;119;252m'        # Violet — worktree badge
+C_LINK='\033[38;2;96;165;250m'       # Blue — clickable links
 
 # Color by percentage threshold
 pct_color() {
@@ -125,6 +134,17 @@ _mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0;
     _bh=$(echo "$_sync" | awk '{print $2}'); _bh=${_bh:-0}
     _stash=$(git -C "$cdir" stash list 2>/dev/null | wc -l | tr -d ' ')
     _epoch=$(git -C "$cdir" log -1 --format='%ct' 2>/dev/null)
+
+    # Git remote URL → GitHub HTTPS (cached per repo)
+    _repo_hash=$(echo "$cdir" | md5 -q 2>/dev/null || echo "$cdir" | md5sum 2>/dev/null | cut -d' ' -f1)
+    _remote_cache="/tmp/claude-sl-remote-${_repo_hash}"
+    if [ ! -f "$_remote_cache" ] || [ $(( $(date +%s) - $(_mtime "$_remote_cache") )) -gt 300 ]; then
+      _raw_url=$(git -C "$cdir" remote get-url origin 2>/dev/null)
+      _gh_url=$(echo "$_raw_url" | sed 's|git@github.com:|https://github.com/|; s|\.git$||')
+      echo "$_gh_url" > "$_remote_cache" 2>/dev/null
+    fi
+    _gh_url=$(cat "$_remote_cache" 2>/dev/null)
+
     cat > "$_tmp/git" <<EOF
 g_repo=true
 g_branch='$_br'
@@ -132,6 +152,7 @@ g_ahead=${_ah:-0}
 g_behind=${_bh:-0}
 g_stash=${_stash:-0}
 g_epoch=${_epoch:-0}
+g_remote_url='${_gh_url}'
 EOF
   else
     echo "g_repo=false" > "$_tmp/git"
@@ -271,6 +292,10 @@ render_bar() {
   echo "$out"
 }
 
+# ── OSC 8 clickable link helper ─────────────────────────────────────────────
+# Usage: osc8_link "https://..." "display text"
+osc8_link() { printf '\033]8;;%s\a%s\033]8;;\a' "$1" "$2"; }
+
 # ── Output ──────────────────────────────────────────────────────────────────
 
 raw_pct=${ctx_pct%%.*}; [ -z "$raw_pct" ] && raw_pct=0
@@ -285,18 +310,44 @@ esac
 
 bar=$(render_bar "$bw" "$raw_pct")
 
-# ── Line 1: Model │ Dir │ Git ───────────────────────────────────────────────
+# ── Line 1: Model │ Dir │ Git │ Worktree │ Vim ─────────────────────────────
 
 printf "${C_MODEL}${model}${RST}"
 printf " ${C_SEP}│${RST} ${C_DIR}${dir_name}${RST}"
 
 if [ "${g_repo:-false}" = "true" ]; then
-  printf " ${C_BRANCH}${g_branch}${RST}"
+  # Clickable branch → GitHub tree URL (OSC 8)
+  if [ -n "${g_remote_url:-}" ] && [ "$g_remote_url" != "" ]; then
+    _branch_url="${g_remote_url}/tree/${g_branch}"
+    printf " ${C_BRANCH}"
+    osc8_link "$_branch_url" "$g_branch"
+    printf "${RST}"
+  else
+    printf " ${C_BRANCH}${g_branch}${RST}"
+  fi
   [ -n "$sync_str" ] && printf " ${C_SYNC}${sync_str}${RST}"
   if [ "$layout" != "compact" ]; then
     [ -n "$age_str" ] && printf " ${C_LABEL}${age_str}${RST}"
     [ "${g_stash:-0}" -gt 0 ] && printf " ${C_LABEL}stash:${C_VAL}${g_stash}${RST}"
   fi
+fi
+
+# Worktree badge
+if [ -n "${wt_name:-}" ]; then
+  printf " ${C_SEP}│${RST} ${C_WT}⎇ ${wt_name}${RST}"
+  [ -n "${wt_orig_branch:-}" ] && [ "$layout" = "full" ] && \
+    printf " ${C_LABEL}← ${wt_orig_branch}${RST}"
+fi
+
+# Vim mode badge
+if [ -n "${vim_mode:-}" ]; then
+  case "$vim_mode" in
+    NORMAL) _vc="$C_VIM_N" ;;
+    INSERT) _vc="$C_VIM_I" ;;
+    VISUAL*) _vc="$C_VIM_V" ;;
+    *)      _vc="$C_LABEL" ;;
+  esac
+  printf " ${C_SEP}│${RST} ${_vc}${vim_mode}${RST}"
 fi
 
 printf "\n"
