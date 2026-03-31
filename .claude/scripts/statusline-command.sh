@@ -21,7 +21,11 @@ eval "$(echo "$input" | jq -r '
   "vim_mode=" + (.vim.mode // "" | @sh) + "\n" +
   "wt_name=" + (.worktree.name // "" | @sh) + "\n" +
   "wt_branch=" + (.worktree.branch // "" | @sh) + "\n" +
-  "wt_orig_branch=" + (.worktree.original_branch // "" | @sh)
+  "wt_orig_branch=" + (.worktree.original_branch // "" | @sh) + "\n" +
+  "cache_read=" + (.context_window.current_usage.cache_read_input_tokens // 0 | tostring) + "\n" +
+  "cache_create=" + (.context_window.current_usage.cache_creation_input_tokens // 0 | tostring) + "\n" +
+  "session_id=" + (.session_id // "" | @sh) + "\n" +
+  "api_dur_ms=" + (.cost.total_api_duration_ms // 0 | tostring)
 ' 2>/dev/null)"
 
 ctx_pct=${ctx_pct:-0}
@@ -50,6 +54,9 @@ C_VIM_I='\033[38;2;52;211;153m'      # Emerald — vim INSERT
 C_VIM_V='\033[38;2;251;146;60m'      # Orange — vim VISUAL
 C_WT='\033[38;2;217;119;252m'        # Violet — worktree badge
 C_LINK='\033[38;2;96;165;250m'       # Blue — clickable links
+C_CACHE='\033[38;2;56;189;248m'      # Sky — cache stats
+C_SPEED='\033[38;2;167;139;250m'     # Violet — token speed
+C_TURNS='\033[38;2;253;186;116m'     # Peach — turns remaining
 
 # Color by percentage threshold
 pct_color() {
@@ -224,6 +231,60 @@ print(f'\${c:.4f}' if c < 0.01 else f'\${c:.3f}' if c < 1 else f'\${c:.2f}')
 " 2>/dev/null)
 fi
 
+# Cache hit ratio
+cache_read=${cache_read:-0}
+cache_create=${cache_create:-0}
+cache_str=""
+cache_total=$((cache_read + cache_create))
+if [ "$cache_total" -gt 0 ]; then
+  cache_pct=$((cache_read * 100 / cache_total))
+  cache_str="${cache_pct}%"
+fi
+
+# Context percentage (integer, used by multiple sections below)
+raw_pct=${ctx_pct%%.*}; [ -z "$raw_pct" ] && raw_pct=0
+
+# Token speed (output tok/s over API time)
+api_dur_ms=${api_dur_ms:-0}
+speed_str=""
+if [ "$tok_out" -gt 0 ] && [ "$api_dur_ms" -gt 0 ]; then
+  speed_tps=$((tok_out * 1000 / api_dur_ms))
+  if [ "$speed_tps" -ge 1000 ]; then
+    speed_str="$((speed_tps / 1000)).$(( (speed_tps % 1000) / 100 ))k tok/s"
+  else
+    speed_str="${speed_tps} tok/s"
+  fi
+fi
+
+# Compaction prediction (~N turns left)
+turns_str=""
+if [ -n "${session_id:-}" ] && [ "$raw_pct" -gt 0 ] 2>/dev/null; then
+  _ctx_hist="/tmp/claude-sl-ctx-${session_id}"
+  # Append current reading (one line per statusline invocation ≈ per turn)
+  echo "$raw_pct" >> "$_ctx_hist" 2>/dev/null
+  # Read history, compute average growth per turn
+  _lines=$(wc -l < "$_ctx_hist" 2>/dev/null | tr -d ' ')
+  if [ "${_lines:-0}" -ge 2 ]; then
+    _first=$(head -1 "$_ctx_hist")
+    _growth=$((raw_pct - _first))
+    if [ "$_growth" -gt 0 ]; then
+      _turns_elapsed=$((_lines - 1))
+      # remaining % until ~95% (compaction threshold) / avg growth per turn
+      _remaining=$((95 - raw_pct))
+      if [ "$_remaining" -gt 0 ]; then
+        _est=$((_remaining * _turns_elapsed / _growth))
+        if [ "$_est" -gt 0 ]; then
+          turns_str="~${_est} turns"
+        fi
+      fi
+    fi
+  fi
+  # Cap history file at 50 lines to avoid unbounded growth
+  if [ "${_lines:-0}" -gt 50 ]; then
+    tail -30 "$_ctx_hist" > "$_ctx_hist.tmp" && mv "$_ctx_hist.tmp" "$_ctx_hist"
+  fi
+fi
+
 # Session duration
 _ds=$((dur_ms / 1000))
 if   [ "$_ds" -ge 3600 ]; then dur_str="$((_ds/3600))h$((_ds%3600/60))m"
@@ -298,7 +359,6 @@ osc8_link() { printf '\033]8;;%s\a%s\033]8;;\a' "$1" "$2"; }
 
 # ── Output ──────────────────────────────────────────────────────────────────
 
-raw_pct=${ctx_pct%%.*}; [ -z "$raw_pct" ] && raw_pct=0
 pc=$(pct_color "$raw_pct")
 
 # Determine bar width based on layout
@@ -359,6 +419,24 @@ printf "${bar} ${pc}${raw_pct}%%${RST}"
 if [ "$layout" != "compact" ]; then
   printf " ${C_SEP}│${RST} ${C_LABEL}${dur_str}${RST}"
   [ -n "$cost_str" ] && printf " ${C_SEP}│${RST} ${C_COST}${cost_str}${RST}"
+  if [ -n "$cache_str" ]; then
+    _cc=$(pct_color "$cache_pct")  # green=good cache hit rate
+    # Invert: high cache % is good, so flip the color logic
+    if   [ "$cache_pct" -ge 60 ]; then _cc="$C_OK"
+    elif [ "$cache_pct" -ge 30 ]; then _cc="$C_WARN"
+    else _cc="$C_CRIT"
+    fi
+    printf " ${C_SEP}│${RST} ${C_CACHE}cache:${RST}${_cc}${cache_str}${RST}"
+  fi
+  [ -n "$speed_str" ] && printf " ${C_SEP}│${RST} ${C_SPEED}${speed_str}${RST}"
+  if [ -n "$turns_str" ]; then
+    # Color by urgency: red <10, amber <25, green otherwise
+    if   [ "$_est" -le 10 ] 2>/dev/null; then _tc="$C_CRIT"
+    elif [ "$_est" -le 25 ] 2>/dev/null; then _tc="$C_WARN"
+    else _tc="$C_OK"
+    fi
+    printf " ${C_SEP}│${RST} ${C_TURNS}${_tc}${turns_str}${RST}"
+  fi
 fi
 
 printf "\n"
