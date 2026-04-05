@@ -148,13 +148,11 @@ alias cd="z"
 bindkey -e
 
 # Modern directory colors
-eval "$(dircolors -b)"
+if command -v dircolors &>/dev/null; then
+  eval "$(dircolors -b)"
+elif command -v gdircolors &>/dev/null; then
+  eval "$(gdircolors -b)"
+fi
 
 # asdf version manager
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
-
-# Custom scripts
-export PATH="$HOME/bin:$PATH"
-
-# Devcontainer integration
-[[ -f ~/.config/shell/devc.zsh ]] && source ~/.config/shell/devc.zsh
