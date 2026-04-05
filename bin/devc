@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+# devc — devcontainer lifecycle manager for terminal-native workflows
+# Usage: devc <command> [project-dir]
+#
+# Commands:
+#   up        Start devcontainer (runs init scripts, builds, starts services)
+#   down      Stop and remove containers
+#   attach    Attach a shell to the running container
+#   exec      Run a command in the container
+#   logs      Tail container logs
+#   status    Show container status
+#   session   Create a tmux session with dev/logs/host windows
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+DIM='\033[2m'
+NC='\033[0m'
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+die()  { echo -e "${RED}$*${NC}" >&2; exit 1; }
+info() { echo -e "${BLUE}$*${NC}"; }
+ok()   { echo -e "${GREEN}$*${NC}"; }
+warn() { echo -e "${YELLOW}$*${NC}"; }
+
+require() {
+  command -v "$1" &>/dev/null || die "Required tool not found: $1"
+}
+
+resolve_project_dir() {
+  local dir="${1:-.}"
+  dir="$(cd "$dir" && pwd)"
+  [[ -f "$dir/.devcontainer/devcontainer.json" ]] || die "No .devcontainer/devcontainer.json in $dir"
+  echo "$dir"
+}
+
+# Parse devcontainer.json into globals
+parse_config() {
+  local config="$1/.devcontainer/devcontainer.json"
+  DC_NAME=$(jq -r '.name // "devcontainer"' "$config")
+  DC_SERVICE=$(jq -r '.service // empty' "$config")
+  DC_USER=$(jq -r '.remoteUser // "root"' "$config")
+  DC_WORKSPACE=$(jq -r '.workspaceFolder // "/app"' "$config")
+  DC_INIT_CMD=$(jq -r '.initializeCommand // empty' "$config")
+  DC_POST_CREATE=$(jq -r '.postCreateCommand // empty' "$config")
+  DC_COMPOSE="$1/.devcontainer/docker-compose.yml"
+
+  [[ -n "$DC_SERVICE" ]] || die "No 'service' defined in devcontainer.json"
+  [[ -f "$DC_COMPOSE" ]] || die "docker-compose.yml not found at $DC_COMPOSE"
+}
+
+docker_compose() {
+  docker compose -f "$DC_COMPOSE" "$@"
+}
+
+get_container_id() {
+  docker_compose ps -q "$DC_SERVICE" 2>/dev/null | head -1
+}
+
+is_running() {
+  local cid
+  cid=$(get_container_id)
+  [[ -n "$cid" ]] && docker inspect -f '{{.State.Running}}' "$cid" 2>/dev/null | grep -q true
+}
+
+session_name() {
+  echo "$DC_NAME" | tr '[:upper:] .' '[:lower:]--'
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+cmd_up() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  info "[$DC_NAME] Starting devcontainer..."
+
+  # Run initializeCommand from project root (handles AWS SSO, cert copy, etc.)
+  if [[ -n "$DC_INIT_CMD" ]]; then
+    warn "Running initializeCommand..."
+    (cd "$project_dir" && eval "$DC_INIT_CMD")
+  fi
+
+  # Build and start
+  info "Starting containers..."
+  (cd "$project_dir" && docker_compose up -d --build)
+
+  ok "Containers running. Use 'devc attach' to connect or 'devc session' for full workspace."
+}
+
+cmd_down() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  warn "[$DC_NAME] Stopping containers..."
+  (cd "$project_dir" && docker_compose down)
+  ok "Stopped."
+}
+
+cmd_attach() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  is_running || die "Container not running. Run 'devc up' first."
+
+  local cid
+  cid=$(get_container_id)
+  ok "Attaching to $DC_NAME as $DC_USER..."
+  docker exec -it -u "$DC_USER" -w "$DC_WORKSPACE" "$cid" zsh -l
+}
+
+cmd_exec() {
+  local project_dir="."
+  # If first arg doesn't look like a command, treat it as project dir
+  if [[ "${1:-.}" == /* || -d "${1:-.}/.devcontainer" ]]; then
+    project_dir="$1"
+    shift
+  fi
+  parse_config "$(resolve_project_dir "$project_dir")"
+
+  is_running || die "Container not running. Run 'devc up' first."
+
+  local cid
+  cid=$(get_container_id)
+  docker exec -it -u "$DC_USER" -w "$DC_WORKSPACE" "$cid" "$@"
+}
+
+cmd_logs() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  (cd "$project_dir" && docker_compose logs -f --tail=100)
+}
+
+cmd_status() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  echo -e "${BLUE}[$DC_NAME]${NC}  service=${DC_SERVICE}  user=${DC_USER}  workspace=${DC_WORKSPACE}"
+  echo ""
+  (cd "$project_dir" && docker_compose ps)
+}
+
+cmd_session() {
+  local project_dir
+  project_dir=$(resolve_project_dir "${1:-.}")
+  parse_config "$project_dir"
+
+  local sname
+  sname=$(session_name)
+
+  # If session exists, just attach
+  if tmux has-session -t "$sname" 2>/dev/null; then
+    warn "Session '$sname' exists. Attaching..."
+    if [[ -n "${TMUX:-}" ]]; then
+      tmux switch-client -t "$sname"
+    else
+      tmux attach-session -t "$sname"
+    fi
+    return 0
+  fi
+
+  # Ensure containers are running
+  if ! is_running; then
+    warn "Containers not running. Starting..."
+    cmd_up "$project_dir"
+  fi
+
+  local cid
+  cid=$(get_container_id)
+
+  # Window 0 — dev: shell inside the container
+  tmux new-session -d -s "$sname" -n "dev" -c "$project_dir"
+  tmux send-keys -t "$sname:dev" \
+    "docker exec -it -u $DC_USER -w $DC_WORKSPACE $cid zsh -l" Enter
+
+  # Window 1 — logs: docker compose logs
+  tmux new-window -t "$sname" -n "logs" -c "$project_dir"
+  tmux send-keys -t "$sname:logs" \
+    "docker compose -f $DC_COMPOSE logs -f --tail=100" Enter
+
+  # Window 2 — host: host shell for git, file browsing
+  tmux new-window -t "$sname" -n "host" -c "$project_dir"
+
+  # Focus dev window
+  tmux select-window -t "$sname:dev"
+
+  if [[ -n "${TMUX:-}" ]]; then
+    tmux switch-client -t "$sname"
+  else
+    tmux attach-session -t "$sname"
+  fi
+}
+
+cmd_help() {
+  echo -e "${BLUE}devc${NC} — devcontainer lifecycle manager"
+  echo ""
+  echo "Usage: devc <command> [project-dir]"
+  echo ""
+  echo "Commands:"
+  echo "  up        Start devcontainer (init scripts + docker compose up)"
+  echo "  down      Stop and remove containers"
+  echo "  attach    Attach a zsh shell to the running container"
+  echo "  exec CMD  Run a command inside the container"
+  echo "  logs      Tail container logs"
+  echo "  status    Show container info and status"
+  echo "  session   Create a tmux session (dev/logs/host windows)"
+  echo "  help      Show this help"
+  echo ""
+  echo "If project-dir is omitted, the current directory is used."
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+require jq
+require docker
+require tmux
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  up)      cmd_up "$@" ;;
+  down)    cmd_down "$@" ;;
+  attach)  cmd_attach "$@" ;;
+  exec)    cmd_exec "$@" ;;
+  logs)    cmd_logs "$@" ;;
+  status)  cmd_status "$@" ;;
+  session) cmd_session "$@" ;;
+  help|-h|--help) cmd_help ;;
+  *)       die "Unknown command: $cmd. Run 'devc help' for usage." ;;
+esac
