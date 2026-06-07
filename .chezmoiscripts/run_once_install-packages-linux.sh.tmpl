@@ -62,35 +62,50 @@ install_apt_packages() {
     "zsh"
     "neovim"
     "tmux"
-    "tldr"
     "gpg"
     "gnupg"
     "ca-certificates"
     "fontconfig"
   )
 
-  # Check which packages are missing
-  local to_install=()
+  sudo apt update -y 2>/dev/null
+
+  # Install each package individually so one failure doesn't block the rest
   for pkg in "${packages[@]}"; do
-    if ! dpkg -l | grep -q "^ii  $pkg "; then
-      to_install+=("$pkg")
-    else
+    if dpkg -l "$pkg" 2>/dev/null | grep -q "^ii"; then
       print_success "$pkg already installed"
+    elif sudo apt install -y "$pkg" 2>/dev/null; then
+      print_success "$pkg installed"
+    else
+      print_error "$pkg installation failed"
     fi
   done
+}
 
-  # Install missing packages
-  if [ ${#to_install[@]} -gt 0 ]; then
-    print_message "Installing: ${to_install[*]}"
-    if sudo apt update -y && sudo apt install -y "${to_install[@]}"; then
-      print_success "Core packages installed"
-    else
-      print_error "Failed to install some core packages"
-      return 1
-    fi
-  else
-    print_success "All core packages already installed"
+install_tldr() {
+  print_message "Checking tldr..."
+
+  if command -v tldr &> /dev/null || command -v tealdeer &> /dev/null; then
+    print_success "tldr already installed"
+    return 0
   fi
+
+  # Try apt first, fall back to snap
+  if apt-cache show tldr &>/dev/null 2>&1; then
+    if sudo apt install -y tldr; then
+      print_success "tldr installed"
+      return 0
+    fi
+  fi
+
+  if command -v snap &>/dev/null; then
+    if sudo snap install tldr; then
+      print_success "tldr installed via snap"
+      return 0
+    fi
+  fi
+
+  print_warning "tldr could not be installed (no apt or snap candidate)"
 }
 
 # =========================
@@ -256,6 +271,7 @@ echo "=================================="
 set +e  # Don't exit on error for individual packages
 
 install_apt_packages
+install_tldr
 configure_zsh
 install_wezterm
 install_eza
