@@ -48,6 +48,7 @@ if has_schema 'org.gnome.Ptyxis'; then
     PROFILE="org.gnome.Ptyxis.Profile:/org/gnome/Ptyxis/Profiles/$UUID/"
     gsettings set "$PROFILE" palette 'Tokyo Night'
     gsettings set "$PROFILE" opacity 1.0
+    gsettings reset "$PROFILE" cell-width-scale
   fi
   configured=1
 fi
