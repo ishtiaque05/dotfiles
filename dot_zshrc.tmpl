@@ -132,10 +132,6 @@ _fzf_comprun() {
 
 export BAT_THEME=tokyonight_night
 
-# Zoxide (better cd)
-eval "$(zoxide init zsh)"
-alias cd="z"
-
 # =========================
 # Miscellaneous Settings
 # =========================
@@ -158,3 +154,11 @@ elif [[ -f "/usr/local/bin/brew" ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 {{- end }}
+
+# =========================
+# Zoxide (better cd)
+# =========================
+# Initialize last so its precmd/chpwd hooks aren't clobbered by later config
+# (zoxide warns if anything modifies the shell after its init).
+eval "$(zoxide init zsh)"
+alias cd="z"
