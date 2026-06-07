@@ -8,7 +8,7 @@
 # It detects whichever terminal is installed and mirrors the WezTerm look:
 #   - Tokyo Night colors (matches dot_config/wezterm/appearance.lua)
 #   - MesloLGS NF Nerd Font (installed by run_once_install-fonts.sh.tmpl)
-#   - 0.95 background opacity, dark interface
+#   - opaque background, dark interface
 #
 # Ptyxis is the default terminal on Ubuntu 25.10+/GNOME 47+; older systems use
 # GNOME Terminal. Both are handled below; absent ones are skipped silently.
@@ -47,7 +47,7 @@ if has_schema 'org.gnome.Ptyxis'; then
   if [ -n "$UUID" ]; then
     PROFILE="org.gnome.Ptyxis.Profile:/org/gnome/Ptyxis/Profiles/$UUID/"
     gsettings set "$PROFILE" palette 'Tokyo Night'
-    gsettings set "$PROFILE" opacity 0.95
+    gsettings set "$PROFILE" opacity 1.0
   fi
   configured=1
 fi
@@ -69,8 +69,7 @@ if has_schema 'org.gnome.Terminal.Legacy.Profile'; then
     gsettings set "$P" cursor-colors-set true
     gsettings set "$P" cursor-background-color "$CURSOR"
     gsettings set "$P" cursor-foreground-color "$BG"
-    gsettings set "$P" use-transparent-background true
-    gsettings set "$P" background-transparency-percent 5
+    gsettings set "$P" use-transparent-background false
   fi
   configured=1
 fi

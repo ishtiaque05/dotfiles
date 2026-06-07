@@ -4,8 +4,6 @@ local wezterm = require("wezterm")
 local M = {}
 
 function M.apply(config)
-  local is_macos = wezterm.target_triple:find("darwin") ~= nil
-
   -- Font
   config.font = wezterm.font("MesloLGS NF")
   config.font_size = 13
@@ -32,13 +30,6 @@ function M.apply(config)
     saturation = 0.85,
     brightness = 0.85,
   }
-
-  -- Platform-specific
-  if is_macos then
-    config.macos_window_background_blur = 20
-  else
-    config.window_background_opacity = 0.95
-  end
 
   -- Tokyo Night color scheme
   config.colors = {
