@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# =============================================
+# Configure the GNOME terminal (Ptyxis / GNOME Terminal)
+# =============================================
+# These terminals keep their settings in dconf (not a flat config file), so
+# chezmoi can't manage them as files -- this script applies them via gsettings.
+# It detects whichever terminal is installed and mirrors the WezTerm look:
+#   - Tokyo Night colors (matches dot_config/wezterm/appearance.lua)
+#   - MesloLGS NF Nerd Font (installed by run_once_install-fonts.sh.tmpl)
+#   - 0.95 background opacity, dark interface
+#
+# Ptyxis is the default terminal on Ubuntu 25.10+/GNOME 47+; older systems use
+# GNOME Terminal. Both are handled below; absent ones are skipped silently.
+#
+# run_onchange: re-runs whenever any value in this script changes.
+
+set -e
+
+{{- if eq .chezmoi.os "linux" }}
+
+# --- Shared theme values (mirror of dot_config/wezterm/appearance.lua) ---
+FONT='MesloLGS NF 13'
+BG='#1A1B26'
+FG='#C0CAF5'
+CURSOR='#C0CAF5'
+# Tokyo Night: ansi (0-7) then brights (8-15).
+PALETTE="['#15161E','#F7768E','#9ECE6A','#E0AF68','#7AA2F7','#BB9AF7','#7DCFFF','#A9B1D6','#414868','#FF899D','#9FE044','#FABA4A','#8DB0FF','#C7A9FF','#A4DAFF','#C0CAF5']"
+
+has_schema() { gsettings list-schemas 2>/dev/null | grep -qx "$1"; }
+
+if ! command -v gsettings >/dev/null 2>&1; then
+  exit 0
+fi
+
+configured=0
+
+# --- Ptyxis ---------------------------------------------------------------
+# Ptyxis ships a "Tokyo Night" palette by name, so we just select it.
+if has_schema 'org.gnome.Ptyxis'; then
+  echo -e "\n[INFO]: Configuring Ptyxis (Tokyo Night + MesloLGS NF)..."
+  gsettings set org.gnome.Ptyxis use-system-font false
+  gsettings set org.gnome.Ptyxis font-name "$FONT"
+  gsettings set org.gnome.Ptyxis interface-style 'dark'
+
+  UUID="$(gsettings get org.gnome.Ptyxis default-profile-uuid | tr -d "'")"
+  if [ -n "$UUID" ]; then
+    PROFILE="org.gnome.Ptyxis.Profile:/org/gnome/Ptyxis/Profiles/$UUID/"
+    gsettings set "$PROFILE" palette 'Tokyo Night'
+    gsettings set "$PROFILE" opacity 0.95
+  fi
+  configured=1
+fi
+
+# --- GNOME Terminal -------------------------------------------------------
+# No named-palette concept; set the 16 colors + bg/fg explicitly.
+if has_schema 'org.gnome.Terminal.Legacy.Profile'; then
+  echo -e "\n[INFO]: Configuring GNOME Terminal (Tokyo Night + MesloLGS NF)..."
+  UUID="$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d "'")"
+  if [ -n "$UUID" ]; then
+    P="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$UUID/"
+    gsettings set "$P" use-system-font false
+    gsettings set "$P" font "$FONT"
+    gsettings set "$P" use-theme-colors false
+    gsettings set "$P" background-color "$BG"
+    gsettings set "$P" foreground-color "$FG"
+    gsettings set "$P" palette "$PALETTE"
+    gsettings set "$P" bold-color-same-as-fg true
+    gsettings set "$P" cursor-colors-set true
+    gsettings set "$P" cursor-background-color "$CURSOR"
+    gsettings set "$P" cursor-foreground-color "$BG"
+    gsettings set "$P" use-transparent-background true
+    gsettings set "$P" background-transparency-percent 5
+  fi
+  configured=1
+fi
+
+if [ "$configured" -eq 0 ]; then
+  echo "[INFO]: Neither Ptyxis nor GNOME Terminal found; skipping terminal theming."
+else
+  echo "[INFO]: Terminal configured. Open a new window to see the theme."
+fi
+{{- end }}
