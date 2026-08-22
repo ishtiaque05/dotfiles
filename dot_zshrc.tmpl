@@ -89,42 +89,16 @@ source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 [[ -f ~/.aliases ]] && source ~/.aliases
 
 # =========================
-# Fuzzy Finder (FZF)
+# PATH
 # =========================
-
-# FZF theme settings (Tokyo Night)
-fg="#c0caf5"
-bg="#1a1b26"
-bg_highlight="#292e42"
-purple="#bb9af7"
-blue="#7aa2f7"
-cyan="#7dcfff"
-
-export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
+# ~/.local/bin holds our bat->batcat and fd->fdfind symlinks. It has to come
+# before the fzf config below, which probes for fd to pick a search backend.
 export PATH="$HOME/.local/bin:$PATH"
 
-# FZF keybindings and preview settings
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-show_file_or_dir_preview="if [ -d {} ]; then eza --tree --color=always {} | head -200; else bat -n --color=always --line-range :500 {}; fi"
-
-export FZF_CTRL_T_OPTS="--preview '$show_file_or_dir_preview'"
-export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {} | head -200'"
-
-# Advanced customization of fzf options via _fzf_comprun function
-# - The first argument to the function is the name of the command.
-# - You should make sure to pass the rest of the arguments to fzf.
-_fzf_comprun() {
-  local command=$1
-  shift
-
-  case "$command" in
-    cd)           fzf --preview 'eza --tree --color=always {} | head -200' "$@" ;;
-    export|unset) fzf --preview "eval 'echo ${}'"         "$@" ;;
-    ssh)          fzf --preview 'dig {}'                   "$@" ;;
-    *)            fzf --preview "$show_file_or_dir_preview" "$@" ;;
-  esac
-}
+# =========================
+# Fuzzy Finder (fzf)
+# =========================
+[[ -f ~/.config/zsh/fzf.zsh ]] && source ~/.config/zsh/fzf.zsh
 
 # =========================
 # Bat (Better `cat`)
@@ -154,6 +128,12 @@ elif [[ -f "/usr/local/bin/brew" ]]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 {{- end }}
+
+# =========================
+# asdf version manager
+# =========================
+export PATH="$HOME/.asdf/bin:$PATH"
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 
 # =========================
 # Zoxide (better cd)

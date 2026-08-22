@@ -74,9 +74,25 @@ chezmoi apply
 ### Modern CLI Tools
 - **eza**: Modern replacement for `ls`
 - **bat**: Modern replacement for `cat`
-- **fzf**: Fuzzy finder
+- **fzf**: Fuzzy finder — config in `~/.config/zsh/fzf.zsh`
+- **fd**: Fast file finder, used as fzf's search backend
+- **ripgrep**: Fast recursive grep
 - **zoxide**: Smarter `cd` command
 - **tldr**: Simplified man pages
+
+#### fzf key bindings and widgets
+| Binding | Action |
+| --- | --- |
+| `Ctrl-T` | Insert a file path, with a bat/eza preview |
+| `Ctrl-R` | Search shell history, with the full command previewed |
+| `Alt-C` | `cd` into a directory, with a tree preview |
+| `**<TAB>` | Fuzzy completion for any command |
+| `Ctrl-/` | Toggle the preview pane |
+| `fgb` | Fuzzy-checkout a git branch (local or remote) |
+| `fgl` | Browse git history; `enter` opens the full patch |
+| `fkill` | Select processes and signal them |
+
+Inside tmux, fzf opens as a centered popup.
 
 ### Aliases
 - Git shortcuts (`gs`, `gco`, `gp`, etc.)

@@ -66,6 +66,9 @@ install_apt_packages() {
     "gnupg"
     "ca-certificates"
     "fontconfig"
+    "fzf"
+    "fd-find"
+    "ripgrep"
   )
 
   sudo apt update -y 2>/dev/null
@@ -216,26 +219,30 @@ install_bat() {
 }
 
 # =========================
-# Fzf (fuzzy finder)
+# Fd (fast file finder, used as fzf's search backend)
 # =========================
 
-install_fzf() {
-  print_message "Checking fzf..."
+install_fd_symlink() {
+  print_message "Checking fd..."
 
-  if [ -d "$HOME/.fzf" ]; then
-    print_success "fzf already installed"
+  if command -v fd &> /dev/null; then
+    print_success "fd already available"
     return 0
   fi
 
-  print_message "Installing fzf..."
-  {
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" &&
-    "$HOME/.fzf/install" --all &&
-    print_success "fzf installed"
-  } || {
-    print_error "fzf installation failed"
-    return 1
-  }
+  # Debian/Ubuntu ship the binary as `fdfind` to avoid a name clash with an
+  # unrelated package, the same way bat ships as `batcat`.
+  if command -v fdfind &> /dev/null; then
+    mkdir -p "$HOME/.local/bin"
+    if ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"; then
+      print_success "fd installed (symlink created)"
+    else
+      print_error "fd symlink creation failed"
+      return 1
+    fi
+  else
+    print_warning "fdfind not found; fzf will fall back to find"
+  fi
 }
 
 # =========================
@@ -276,7 +283,7 @@ configure_zsh
 install_wezterm
 install_eza
 install_bat
-install_fzf
+install_fd_symlink
 install_zoxide
 
 set -e  # Re-enable exit on error
