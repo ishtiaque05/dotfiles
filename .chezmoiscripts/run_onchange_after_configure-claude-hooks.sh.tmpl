@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# =========================
+# Claude Code: terminal state hooks
+# =========================
+# Registers ~/.local/bin/claude-term-state as Claude Code hooks, so the
+# WezTerm tab / tmux window (and the pane, when split) running Claude turns:
+#   yellow  Claude needs your input: a permission prompt, a question
+#           (AskUserQuestion), a plan to approve, or an MCP input request
+#   green   Claude finished its turn
+#   red     the turn ended on an API error (rate limit, auth, overload)
+# and goes back to normal as soon as Claude starts working again.
+#
+# Merges into ~/.claude/settings.json rather than owning it, so the rest of
+# your Claude settings stay untouched. Re-running replaces only the entries
+# that call claude-term-state. Reruns whenever this file changes.
+
+set -euo pipefail
+
+settings="$HOME/.claude/settings.json"
+cmd='"$HOME/.local/bin/claude-term-state"'
+
+print_message() {
+  echo -e "\n[INFO]: $1"
+}
+
+if ! command -v jq &>/dev/null; then
+  print_message "jq not found; skipping Claude Code hook setup. Install jq and run 'chezmoi apply' again."
+  exit 0
+fi
+
+# idle_prompt is left out on purpose: it fires ~60s after Claude finishes and
+# would turn a green "done" tab yellow.
+hooks=$(jq -n --arg c "$cmd" '
+  def run($state): [{type: "command", command: ($c + " " + $state), timeout: 5}];
+  {
+    SessionStart:       [{hooks: run("clear")}],
+    UserPromptSubmit:   [{hooks: run("running")}],
+    PreToolUse:         [{matcher: "AskUserQuestion|ExitPlanMode", hooks: run("waiting")}],
+    PermissionRequest:  [{hooks: run("waiting")}],
+    Elicitation:        [{hooks: run("waiting")}],
+    Notification:       [{matcher: "permission_prompt|elicitation_dialog|elicitation_url_dialog|agent_needs_input", hooks: run("waiting")}],
+    PostToolUse:        [{hooks: run("running")}],
+    PostToolUseFailure: [{hooks: run("running")}],
+    Stop:               [{hooks: run("done")}],
+    StopFailure:        [{hooks: run("error")}],
+    SessionEnd:         [{hooks: run("clear")}]
+  }')
+
+mkdir -p "$(dirname "$settings")"
+if [[ ! -s "$settings" ]]; then
+  echo '{}' >"$settings"
+fi
+
+if ! jq -e 'type == "object"' "$settings" &>/dev/null; then
+  print_message "$settings is not valid JSON; leaving it alone. Fix it and run 'chezmoi apply' again."
+  exit 0
+fi
+
+tmp=$(mktemp "${settings}.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+
+jq --argjson new "$hooks" '
+  # Drop any hook groups we added before, then any events left empty.
+  .hooks = ((.hooks // {})
+    | with_entries(.value |= map(select(any(.hooks[]?; (.command // "") | contains("claude-term-state")) | not)))
+    | with_entries(select(.value | length > 0)))
+  # Append ours after the user'"'"'s own hooks.
+  | reduce ($new | to_entries[]) as $e (.; .hooks[$e.key] = ((.hooks[$e.key] // []) + $e.value))
+' "$settings" >"$tmp"
+
+if cmp -s "$tmp" "$settings"; then
+  print_message "Claude Code terminal-state hooks already up to date."
+  exit 0
+fi
+
+cp "$settings" "${settings}.bak"
+mv "$tmp" "$settings"
+trap - EXIT
+print_message "Claude Code terminal-state hooks installed in $settings (backup: ${settings}.bak)."

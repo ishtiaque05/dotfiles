@@ -49,8 +49,15 @@ alias bers="bundle exec rails server"
 # Modern CLI Tools
 # =========================
 
-alias ls="eza --icons=always"
-alias cat="bat --paging=never"
+# Only shadow the builtins when the replacement exists, so a fresh or minimal
+# machine still has a working ls/cat.
+if command -v eza >/dev/null 2>&1; then
+  alias ls="eza --icons=always"
+  alias ll="eza --icons=always -l --git"
+  alias la="eza --icons=always -la --git"
+  alias lt="eza --icons=always --tree --level=2"
+fi
+command -v bat >/dev/null 2>&1 && alias cat="bat --paging=never"
 
 # =========================
 # Content Preview
