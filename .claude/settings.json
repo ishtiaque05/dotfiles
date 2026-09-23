@@ -25,5 +25,10 @@
         "repo": "anthropics/claude-plugins-official"
       }
     }
-  }
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "includeCoAuthoredBy": false
 }
