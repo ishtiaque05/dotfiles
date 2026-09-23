@@ -1,10 +1,22 @@
 {
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true,
+    "dev-tools@syed-dotclaude-plugins": true,
+    "knowledge-base@syed-dotclaude-plugins": true,
+    "codebase-research@syed-dotclaude-plugins": true
+  },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
-      "source": { "source": "github", "repo": "obra/superpowers-marketplace" }
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "syed-dotclaude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "ishtiaque05/dotclaude"
+      }
     }
-  },
-  "enabledPlugins": {
-    "superpowers@superpowers-marketplace": true
   }
 }
