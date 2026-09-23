@@ -3,7 +3,8 @@
     "superpowers@superpowers-marketplace": true,
     "dev-tools@syed-dotclaude-plugins": true,
     "knowledge-base@syed-dotclaude-plugins": true,
-    "codebase-research@syed-dotclaude-plugins": true
+    "codebase-research@syed-dotclaude-plugins": true,
+    "frontend-design@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
@@ -16,6 +17,12 @@
       "source": {
         "source": "github",
         "repo": "ishtiaque05/dotclaude"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
       }
     }
   }
