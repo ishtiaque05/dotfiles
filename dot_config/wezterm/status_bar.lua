@@ -1,10 +1,18 @@
 -- dot_config/wezterm/status_bar.lua
 local wezterm = require("wezterm")
+local claude_status = require("claude_status")
 
 local M = {}
 
 -- Cache for git info per directory (updated by update-status, read by format-tab-title)
 local git_cache = {}
+
+-- update-status ticks every second so Claude state changes show up quickly
+-- (see multiplexer.lua). The git/battery/version work below only needs to run
+-- every few seconds, so its result is cached per window in between.
+local SLOW_REFRESH_SECONDS = 5
+local last_slow_refresh = {} -- window_id -> epoch seconds
+local right_status_cache = {} -- window_id -> formatted right status
 
 -- Tokyo Night colors
 local colors = {
@@ -98,11 +106,20 @@ local function separator()
 end
 
 function M.setup(wezterm_mod)
-  -- Status update interval: 5 seconds
-  -- (balances responsiveness with I/O from reading version files)
+  claude_status.setup()
 
   -- Right-side status dashboard
   wezterm_mod.on("update-status", function(window, pane)
+    claude_status.refresh(window)
+
+    local window_id = window:window_id()
+    local now = os.time()
+    if right_status_cache[window_id] and now - (last_slow_refresh[window_id] or 0) < SLOW_REFRESH_SECONDS then
+      window:set_right_status(right_status_cache[window_id])
+      return
+    end
+    last_slow_refresh[window_id] = now
+
     local cwd_uri = pane:get_current_working_dir()
     local cwd = nil
     if cwd_uri then
@@ -168,7 +185,8 @@ function M.setup(wezterm_mod)
       table.insert(status_parts, seg)
     end
 
-    window:set_right_status(table.concat(status_parts))
+    right_status_cache[window_id] = table.concat(status_parts)
+    window:set_right_status(right_status_cache[window_id])
   end)
 
   -- Tab title formatting with git info
@@ -201,6 +219,17 @@ function M.setup(wezterm_mod)
 
     local tab_index = tab.tab_index + 1
     local tab_text = " " .. tab_index .. ": " .. title .. git_str .. " "
+
+    -- Claude Code state: yellow = needs input, green = done, red = error
+    local claude = claude_status.tab_state(tab.tab_id)
+    if claude then
+      return {
+        { Background = { Color = claude_status.colors[claude] } },
+        { Foreground = { Color = colors.bg } },
+        { Attribute = { Intensity = "Bold" } },
+        { Text = (tab.is_active and " ❯" or "  ") .. tab_text },
+      }
+    end
 
     if tab.is_active then
       return {

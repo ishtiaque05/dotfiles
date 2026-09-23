@@ -1,0 +1,135 @@
+#!/bin/sh
+# claude-term-state - show Claude Code's state on the terminal running it.
+#
+#   waiting  Claude needs your input (permission, question, plan)  -> yellow
+#   done     Claude finished its turn                               -> green
+#   error    the turn ended on an API error                         -> red
+#   clear    Claude is working again, or the session ended          -> no color
+#   (running is an alias for clear)
+#
+# Called from Claude Code hooks (see run_onchange_after_configure-claude-hooks)
+# and from zsh's precmd to drop a stale state after Claude exits uncleanly.
+#
+# Hooks run in their own session with NO controlling terminal: /dev/tty can't be
+# opened, and Claude's `terminalSequence` output only allows titles and
+# notifications. So this never relies on its own tty. It picks a channel from
+# the environment it inherited from the shell that started Claude:
+#
+#   tmux     $TMUX_PANE      tmux CLI over its socket: per-pane border color,
+#                            and @claude_state for the window-status (tab) color.
+#   WezTerm  $WEZTERM_PANE   state file keyed by pane id, polled by
+#                            ~/.config/wezterm/claude_status.lua.
+#   SSH etc. neither         OSC 1337 SetUserVar written to Claude's own pty,
+#                            found by walking up the process tree. WezTerm on the
+#                            other end of the SSH connection picks it up.
+#
+# It always exits 0 and prints nothing: UserPromptSubmit/SessionStart hook
+# stdout would be injected into Claude's context.
+#
+# Set CLAUDE_TERM_STATE=off to disable.
+
+state=${1:-clear}
+[ "$state" = running ] && state=clear
+
+case $state in
+  waiting | done | error | clear) ;;
+  *) exit 0 ;;
+esac
+
+[ "${CLAUDE_TERM_STATE:-on}" = off ] && exit 0
+
+# Drain the hook's JSON payload so Claude never sees a broken pipe. Skip when
+# run by hand from a terminal, where cat would block.
+[ -t 0 ] || cat >/dev/null 2>&1
+
+state_dir=$HOME/.local/state/claude-term-state
+
+color() {
+  case $1 in
+    waiting) echo '#e0af68' ;;
+    done) echo '#9ece6a' ;;
+    error) echo '#f7768e' ;;
+  esac
+}
+
+# Record the state under a per-terminal slot. The slot names must match
+# _claude_term_state_slot in ~/.zshrc and the WezTerm module.
+record() {
+  mkdir -p "$state_dir" 2>/dev/null || return 0
+  if [ "$state" = clear ]; then
+    rm -f "$state_dir/$1"
+  else
+    # Write then rename, so a reader never sees a half-written file.
+    printf '%s %s\n' "$state" "$(date +%s)" >"$state_dir/$1.$$" &&
+      mv -f "$state_dir/$1.$$" "$state_dir/$1"
+  fi
+}
+
+# ---- tmux --------------------------------------------------------------------
+apply_tmux() {
+  command -v tmux >/dev/null 2>&1 || return 1
+  pane=$TMUX_PANE
+  if [ "$state" = clear ]; then
+    tmux set -p -t "$pane" -u pane-border-style \; \
+      set -p -t "$pane" -u pane-active-border-style \; \
+      set -p -t "$pane" -u @claude_state >/dev/null 2>&1
+  else
+    c=$(color "$state")
+    tmux set -p -t "$pane" pane-border-style "fg=$c" \; \
+      set -p -t "$pane" pane-active-border-style "fg=$c,bold" \; \
+      set -p -t "$pane" @claude_state "$state" >/dev/null 2>&1
+  fi || return 1
+  record "tmux-${pane#%}"
+}
+
+# ---- WezTerm (local) -------------------------------------------------------------
+apply_wezterm() {
+  case $WEZTERM_PANE in '' | *[!0-9]*) return 1 ;; esac
+  record "wezterm-$WEZTERM_PANE"
+}
+
+# ---- pty fallback (SSH, or WezTerm env not inherited) -------------------------
+# Walk up from our parent (Claude) to the first ancestor with a controlling
+# terminal. `ps -o tty=` prints pts/3 on Linux and ttys003 on macOS.
+find_tty() {
+  pid=$PPID
+  depth=0
+  while [ "$depth" -lt 10 ] && [ "${pid:-0}" -gt 1 ]; do
+    t=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
+    case $t in
+      '' | '?' | '??' | '-') ;;
+      /dev/*) echo "$t"; return 0 ;;
+      *) echo "/dev/$t"; return 0 ;;
+    esac
+    pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+    depth=$((depth + 1))
+  done
+  return 1
+}
+
+apply_pty() {
+  # Only where a WezTerm could be listening; other terminals would just ignore
+  # the sequence, but there's no point writing into their pty.
+  [ "$TERM_PROGRAM" = WezTerm ] || [ -n "$SSH_CONNECTION" ] || [ -n "$SSH_TTY" ] || return 1
+  tty=$(find_tty) || return 1
+  [ -c "$tty" ] && [ -w "$tty" ] || return 1
+
+  value=
+  [ "$state" != clear ] && value="$state $(date +%s)"
+  encoded=$(printf '%s' "$value" | base64 | tr -d '\n')
+
+  # One printf = one write(2). The kernel serializes whole writes to a tty, so
+  # this lands between Claude's own frames rather than inside one.
+  printf '\033]1337;SetUserVar=claude_state=%s\007' "$encoded" >"$tty" 2>/dev/null || return 1
+  record "tty-$(printf '%s' "$tty" | tr / _)"
+}
+
+if [ -n "$TMUX" ] && [ -n "$TMUX_PANE" ]; then
+  # Inside tmux, $WEZTERM_PANE is whatever the tmux server inherited and may
+  # point at an unrelated pane, so tmux is the only channel used.
+  apply_tmux
+elif ! apply_wezterm; then
+  apply_pty
+fi
+
+exit 0

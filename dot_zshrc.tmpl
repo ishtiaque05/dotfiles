@@ -185,6 +185,31 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
   source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # =========================
+# Claude Code terminal state
+# =========================
+# Claude Code hooks color the tab/pane running it (see claude-term-state).
+# If Claude dies without running its SessionEnd hook (crash, kill, dropped
+# SSH), clear the leftover color when this shell's prompt comes back. The slot
+# names must match the ones in claude-term-state; only a file test runs per
+# prompt.
+if [[ -x ~/.local/bin/claude-term-state ]]; then
+  _claude_term_state_precmd() {
+    local slot
+    if [[ -n $TMUX && -n $TMUX_PANE ]]; then
+      slot=tmux-${TMUX_PANE#%}
+    elif [[ $WEZTERM_PANE == <-> ]]; then
+      slot=wezterm-$WEZTERM_PANE
+    else
+      slot=tty-${TTY//\//_}
+    fi
+    [[ -e ~/.local/state/claude-term-state/$slot ]] &&
+      ~/.local/bin/claude-term-state clear </dev/null
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook precmd _claude_term_state_precmd
+fi
+
+# =========================
 # Local overrides
 # =========================
 # Machine-specific settings and secrets that shouldn't live in the repo.

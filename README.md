@@ -99,6 +99,24 @@ Inside tmux, fzf opens as a centered popup.
 - Rails commands (`rc`, `rs`, `rdm`, etc.)
 - See `~/.aliases` for full list
 
+### Claude Code terminal state
+
+The tab running Claude Code changes color so you can see at a glance which session needs you:
+
+| Color | Meaning |
+|-------|---------|
+| Yellow | Claude needs your input: a permission prompt, a question, a plan to approve |
+| Green | Claude finished its turn |
+| Red | The turn ended on an API error (rate limit, auth, overload) |
+
+The color clears as soon as Claude starts working again.
+
+- **WezTerm:** the tab changes color. When the tab is split, the pane running Claude is tinted too. WezTerm can't color a single pane's border, so the tint marks it instead.
+- **tmux:** the window's tab changes color, and in a split the pane gets a colored border.
+- **SSH:** works when Claude runs on a remote host inside WezTerm. Use tmux on the remote side if you want pane borders there.
+
+How it works: `chezmoi apply` merges hooks into `~/.claude/settings.json` (your other settings are kept, with a `.bak` backup). The hooks call `~/.local/bin/claude-term-state`. Claude Code runs hooks without a terminal, so the script never uses `/dev/tty`. It talks to tmux through its socket, to local WezTerm through a small state file, and over SSH it writes to Claude's own pty. Set `CLAUDE_TERM_STATE=off` to turn it off.
+
 ## Updating Dotfiles
 
 Pull and apply the latest changes:
